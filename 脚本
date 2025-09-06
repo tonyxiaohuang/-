@@ -1,4 +1,4 @@
--- Roblox：登录输入“1”进入。主界面可上下滑动，界面美化，外部有“隐藏界面/显示界面”按钮。含速度/踏空/穿墙/无限跳。
+-- Roblox：登录输入“1”进入。主界面可上下滑动，界面美化，外部有“隐藏界面/显示界面”按钮。含速度/踏空/穿墙/无限跳/上帝模式
 
 if game.CoreGui:FindFirstChild("MyCustomUI") then game.CoreGui.MyCustomUI:Destroy() end
 
@@ -8,7 +8,7 @@ local gui = Instance.new("ScreenGui", game.CoreGui)
 gui.Name = "MyCustomUI"
 gui.ResetOnSpawn = false
 
--- 隐藏/显示按钮（始终置顶）
+-- 隐藏/显示按钮
 local toggleBtn = Instance.new("TextButton", gui)
 toggleBtn.Size = UDim2.new(0, 80, 0, 36)
 toggleBtn.Position = UDim2.new(0, 16, 0, 16)
@@ -94,7 +94,7 @@ local function showMainUI()
     -- 外部容器
     local f = Instance.new("Frame", gui)
     mainFrame = f
-    f.Size = UDim2.new(0, 400, 0, 330)
+    f.Size = UDim2.new(0, 400, 0, 360)
     f.AnchorPoint = Vector2.new(0.5, 0.5)
     f.Position = UDim2.new(0.5, 0, 0.5, 0)
     f.BackgroundColor3 = Color3.fromRGB(35, 40, 58)
@@ -158,7 +158,7 @@ local function showMainUI()
     scroll.Position = UDim2.new(0,0,0,54)
     scroll.Size = UDim2.new(1,0,1,-54)
     scroll.BackgroundTransparency = 1
-    scroll.CanvasSize = UDim2.new(0,0,0,340)
+    scroll.CanvasSize = UDim2.new(0,0,0,360)
     scroll.ScrollBarThickness = 8
     scroll.ScrollBarImageColor3 = Color3.fromRGB(38,150,255)
     scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -369,10 +369,64 @@ local function showMainUI()
     infjumpBtn.MouseButton1Click:Connect(function() enableInfJump(not infjumpEnabled) end)
     p.CharacterAdded:Connect(function() wait(1) enableInfJump(false) end)
 
+    -- 上帝模式
+    local godEnabled = false
+    local godBtn = Instance.new("TextButton", scroll)
+    godBtn.Size = UDim2.new(0, 300, 0, 40)
+    godBtn.Position = UDim2.new(0, 50, 0, 230)
+    godBtn.BackgroundColor3 = Color3.fromRGB(255, 225, 70)
+    godBtn.Text = "上帝模式：关闭"
+    godBtn.Font = Enum.Font.GothamBold
+    godBtn.TextSize = 20
+    godBtn.TextColor3 = Color3.fromRGB(50,50,50)
+    godBtn.ZIndex = 11
+    Instance.new("UICorner", godBtn).CornerRadius = UDim.new(1,0)
+    local godConn = nil
+    local function enableGodMode(enable)
+        godEnabled = enable
+        if enable then
+            godBtn.BackgroundColor3 = Color3.fromRGB(255, 225, 70)
+            godBtn.Text = "上帝模式：开启"
+            -- 持续让人物无敌
+            godConn = game:GetService("RunService").RenderStepped:Connect(function()
+                local h = getHumanoid()
+                if h then
+                    h.Health = h.MaxHealth or 100
+                    h.NameDisplayDistance = 0 -- 隐藏血条
+                    h.BreakJointsOnDeath = false
+                    h.PlatformStand = false
+                    -- 防止WalkSpeed/JumpPower被还原
+                    h:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+                    h:SetStateEnabled(Enum.HumanoidStateType.Physics, true)
+                end
+            end)
+            -- 也可监听受伤自动恢复
+            if h then
+                h.HealthChanged:Connect(function(val)
+                    if godEnabled and h then
+                        h.Health = h.MaxHealth or 100
+                    end
+                end)
+            end
+        else
+            godBtn.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
+            godBtn.Text = "上帝模式：关闭"
+            if godConn then godConn:Disconnect() godConn = nil end
+            local h = getHumanoid()
+            if h then
+                -- 恢复默认
+                h:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
+                h.NameDisplayDistance = 100
+            end
+        end
+    end
+    godBtn.MouseButton1Click:Connect(function() enableGodMode(not godEnabled) end)
+    p.CharacterAdded:Connect(function() wait(1) enableGodMode(false) end)
+
     -- 分割线
     local sep = Instance.new("Frame", scroll)
     sep.Size = UDim2.new(1, -56, 0, 2)
-    sep.Position = UDim2.new(0, 28, 0, 222)
+    sep.Position = UDim2.new(0, 28, 0, 282)
     sep.BackgroundColor3 = Color3.fromRGB(38,150,255)
     sep.BorderSizePixel = 0
     sep.ZIndex = 11
@@ -380,9 +434,9 @@ local function showMainUI()
     -- 提示文本
     local tip = Instance.new("TextLabel", scroll)
     tip.Size = UDim2.new(1, -56, 0, 30)
-    tip.Position = UDim2.new(0, 28, 0, 240)
+    tip.Position = UDim2.new(0, 28, 0, 300)
     tip.BackgroundTransparency = 1
-    tip.Text = "功能说明：踏空行走=空气墙，穿墙=Noclip，无限跳=多段跳"
+    tip.Text = "功能说明：踏空行走=空气墙，穿墙=Noclip，无限跳=多段跳，上帝模式=无敌"
     tip.Font = Enum.Font.Gotham
     tip.TextSize = 16
     tip.TextColor3 = Color3.fromRGB(190,215,255)
@@ -390,7 +444,7 @@ local function showMainUI()
     tip.ZIndex = 11
 
     -- 滚动区域自动适应内容高度
-    scroll.CanvasSize = UDim2.new(0,0,0,280)
+    scroll.CanvasSize = UDim2.new(0,0,0,340)
 end
 
 loginBtn.MouseButton1Click:Connect(function()
