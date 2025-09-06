@@ -1,4 +1,5 @@
--- Roblox：登录输入“1”进入。主界面可上下滑动（滑动区域极长，UI紧凑），外部有“隐藏界面/显示界面”，含速度/踏空/穿墙/无限跳/上帝/锁血/自旋/碰玩家秒杀/选择玩家传送杀死/物品栏召唤音箱
+-- Roblox：登录输入“1”进入。主界面可上下滑动（滑动区域更大），外部有“隐藏界面/显示界面”，含速度/踏空/穿墙/无限跳/上帝模式/锁血/人物自定义旋转/碰到玩家秒杀/选择玩家传送和杀死
+-- 优化：窗口更小，滑动距离更长，界面更紧凑
 
 if game.CoreGui:FindFirstChild("MyCustomUI") then game.CoreGui.MyCustomUI:Destroy() end
 
@@ -88,53 +89,6 @@ loginTip.ZIndex = 11
 
 local mainFrame = nil
 
--- 召唤音箱工具
-local function summonBoombox()
-    local p = Players.LocalPlayer
-    local char = p.Character or p.CharacterAdded:Wait()
-    if not char then return end
-
-    local tool = Instance.new("Tool")
-    tool.Name = "Boombox"
-    tool.RequiresHandle = true
-    tool.CanBeDropped = true
-
-    local handle = Instance.new("Part")
-    handle.Name = "Handle"
-    handle.Size = Vector3.new(2, 1, 1)
-    handle.BrickColor = BrickColor.new("Bright yellow")
-    handle.Material = Enum.Material.Metal
-    handle.TopSurface = Enum.SurfaceType.Smooth
-    handle.BottomSurface = Enum.SurfaceType.Smooth
-    handle.CanCollide = false
-    handle.Massless = true
-    handle.Parent = tool
-
-    -- 音箱装饰
-    local decal = Instance.new("Decal")
-    decal.Texture = "rbxassetid://6958773589" -- Roblox官方音箱贴图
-    decal.Face = Enum.NormalId.Front
-    decal.Parent = handle
-
-    -- 默认播放音乐，用户可自行改SoundId
-    local sound = Instance.new("Sound")
-    sound.Name = "Music"
-    sound.SoundId = "rbxassetid://1843520002" -- 默认音乐，可自行更换
-    sound.Volume = 2
-    sound.Looped = true
-    sound.Parent = handle
-
-    tool.Equipped:Connect(function()
-        sound:Play()
-    end)
-    tool.Unequipped:Connect(function()
-        sound:Stop()
-    end)
-
-    -- 工具放入背包
-    tool.Parent = p.Backpack
-end
-
 -- 碰撞秒杀功能
 local killerTouchConn = nil
 local killerEnabled = false
@@ -214,7 +168,7 @@ local function enableLockHealth(enable)
 end
 Players.LocalPlayer.CharacterAdded:Connect(function() if lockHealthEnabled then enableLockHealth(true) end end)
 
--- 选择玩家传送和杀死功能（略缩小）
+-- 选择玩家传送和杀死功能
 local function createPlayerSelect(parent, yOffset)
     local label = Instance.new("TextLabel", parent)
     label.Size = UDim2.new(1, -24, 0, 18)
@@ -336,7 +290,7 @@ local function showMainUI()
     -- 外部容器
     local f = Instance.new("Frame", gui)
     mainFrame = f
-    f.Size = UDim2.new(0, 250, 0, 340)
+    f.Size = UDim2.new(0, 250, 0, 330)
     f.AnchorPoint = Vector2.new(0.5, 0.5)
     f.Position = UDim2.new(0.5, 0, 0.5, 0)
     f.BackgroundColor3 = Color3.fromRGB(35, 40, 58)
@@ -405,7 +359,7 @@ local function showMainUI()
     scroll.Position = UDim2.new(0,0,0,36)
     scroll.Size = UDim2.new(1,0,1,-36)
     scroll.BackgroundTransparency = 1
-    scroll.CanvasSize = UDim2.new(0,0,0,1300) -- 滑动区域极长
+    scroll.CanvasSize = UDim2.new(0,0,0,1200) -- 滑动区域更长
     scroll.ScrollBarThickness = 6
     scroll.ScrollBarImageColor3 = Color3.fromRGB(38,150,255)
     scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -714,26 +668,13 @@ local function showMainUI()
     end)
     updateKillerBtn()
 
-    -- 物品栏召唤Roblox音箱
-    local boomboxBtn = Instance.new("TextButton", scroll)
-    boomboxBtn.Size = UDim2.new(0, 205, 0, 22)
-    boomboxBtn.Position = UDim2.new(0, 12, 0, 198)
-    boomboxBtn.BackgroundColor3 = Color3.fromRGB(255,220,60)
-    boomboxBtn.Text = "召唤Roblox音箱"
-    boomboxBtn.Font = Enum.Font.GothamBold
-    boomboxBtn.TextSize = 13
-    boomboxBtn.TextColor3 = Color3.fromRGB(90,60,0)
-    boomboxBtn.ZIndex = 11
-    Instance.new("UICorner", boomboxBtn).CornerRadius = UDim.new(1,0)
-    boomboxBtn.MouseButton1Click:Connect(summonBoombox)
-
     -- 选择玩家传送和杀死
-    createPlayerSelect(scroll, 235)
+    createPlayerSelect(scroll, 200)
 
     -- 人物旋转
     local rotateBtn = Instance.new("TextButton", scroll)
     rotateBtn.Size = UDim2.new(0, 130, 0, 22)
-    rotateBtn.Position = UDim2.new(0, 12, 0, 305)
+    rotateBtn.Position = UDim2.new(0, 12, 0, 270)
     rotateBtn.BackgroundColor3 = Color3.fromRGB(100, 180, 255)
     rotateBtn.Text = "人物旋转：关"
     rotateBtn.Font = Enum.Font.GothamBold
@@ -744,7 +685,7 @@ local function showMainUI()
 
     local rotateSpeedBox = Instance.new("TextBox", scroll)
     rotateSpeedBox.Size = UDim2.new(0, 56, 0, 22)
-    rotateSpeedBox.Position = UDim2.new(0, 150, 0, 305)
+    rotateSpeedBox.Position = UDim2.new(0, 150, 0, 270)
     rotateSpeedBox.BackgroundColor3 = Color3.fromRGB(70,90,140)
     rotateSpeedBox.Text = tostring(rotateSpeed)
     rotateSpeedBox.PlaceholderText = "转速"
@@ -789,7 +730,7 @@ local function showMainUI()
     -- 分割线
     local sep = Instance.new("Frame", scroll)
     sep.Size = UDim2.new(1, -18, 0, 1)
-    sep.Position = UDim2.new(0, 9, 0, 340)
+    sep.Position = UDim2.new(0, 9, 0, 305)
     sep.BackgroundColor3 = Color3.fromRGB(38,150,255)
     sep.BorderSizePixel = 0
     sep.ZIndex = 11
@@ -797,16 +738,16 @@ local function showMainUI()
     -- 提示文本
     local tip = Instance.new("TextLabel", scroll)
     tip.Size = UDim2.new(1, -18, 0, 40)
-    tip.Position = UDim2.new(0, 9, 0, 347)
+    tip.Position = UDim2.new(0, 9, 0, 312)
     tip.BackgroundTransparency = 1
-    tip.Text = "说明：踏空/穿墙/无限跳/上帝/锁血/碰到玩家秒杀/选择玩家传送杀死/人物旋转/音箱等。窗口更小，滑动更长。"
+    tip.Text = "说明：踏空=空气墙，穿墙=Noclip，无限跳=多段跳，上帝/锁血=无敌，碰到玩家=秒杀，选择玩家可传送/杀死，旋转可自定义速度。窗口更小，滑动更长。"
     tip.Font = Enum.Font.Gotham
     tip.TextSize = 12
     tip.TextColor3 = Color3.fromRGB(190,215,255)
     tip.TextXAlignment = Enum.TextXAlignment.Left
     tip.ZIndex = 11
 
-    scroll.CanvasSize = UDim2.new(0,0,0,1300)
+    scroll.CanvasSize = UDim2.new(0,0,0,1200)
 end
 
 loginBtn.MouseButton1Click:Connect(function()
