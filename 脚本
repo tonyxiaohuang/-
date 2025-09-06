@@ -1,9 +1,10 @@
--- Roblox：登录输入“1”进入。主界面可上下滑动，外部有“隐藏界面/显示界面”，含速度/踏空/穿墙/无限跳/上帝模式/召唤一把造成伤害的刀
+-- Roblox：登录输入“1”进入。主界面可上下滑动，外部有“隐藏界面/显示界面”，含速度/踏空/穿墙/无限跳/上帝模式/召唤伤害刀/召唤飞行地毯
 
 if game.CoreGui:FindFirstChild("MyCustomUI") then game.CoreGui.MyCustomUI:Destroy() end
 
 local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local gui = Instance.new("ScreenGui", game.CoreGui)
 gui.Name = "MyCustomUI"
 gui.ResetOnSpawn = false
@@ -156,6 +157,91 @@ local function summonKnife()
     tool.Parent = p.Backpack
 end
 
+-- 召唤飞行地毯
+local carpetConn = nil
+local carpetObj = nil
+local function summonCarpet()
+    -- 防止重复召唤
+    if carpetObj and carpetObj.Parent then
+        carpetObj:Destroy()
+        if carpetConn then carpetConn:Disconnect() end
+        carpetObj, carpetConn = nil, nil
+        return
+    end
+    local p = Players.LocalPlayer
+    local char = p.Character or p.CharacterAdded:Wait()
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = char.HumanoidRootPart
+
+    -- 创建地毯
+    local carpet = Instance.new("Part")
+    carpet.Name = "MagicCarpet"
+    carpet.Size = Vector3.new(7, 0.5, 7)
+    carpet.Color = Color3.fromRGB(235, 215, 80)
+    carpet.Material = Enum.Material.Fabric
+    carpet.Anchored = false
+    carpet.CanCollide = true
+    carpet.TopSurface = Enum.SurfaceType.Smooth
+    carpet.BottomSurface = Enum.SurfaceType.Smooth
+    carpet.Position = hrp.Position - Vector3.new(0,2.5,0)
+    carpet.Parent = workspace
+
+    -- 装饰（紫色边框）
+    local deco = Instance.new("SelectionBox")
+    deco.Adornee = carpet
+    deco.Color3 = Color3.fromRGB(100,0,220)
+    deco.LineThickness = 0.13
+    deco.SurfaceTransparency = 0.5
+    deco.Parent = carpet
+
+    -- 物理约束，地毯始终跟随人物
+    local alignP = Instance.new("AlignPosition", carpet)
+    alignP.MaxForce = 90000
+    alignP.Responsiveness = 15
+    alignP.Mode = Enum.PositionAlignmentMode.OneAttachment
+
+    local att0 = Instance.new("Attachment", carpet)
+    local att1 = Instance.new("Attachment", hrp)
+    alignP.Attachment0 = att0
+    alignP.Attachment1 = att1
+
+    -- 地毯保持水平
+    local alignO = Instance.new("AlignOrientation", carpet)
+    alignO.MaxTorque = 90000
+    alignO.Responsiveness = 10
+    alignO.Mode = Enum.OrientationAlignmentMode.OneAttachment
+    local attO0 = Instance.new("Attachment", carpet)
+    alignO.Attachment0 = attO0
+    alignO.Attachment1 = att1
+
+    -- 飞行控制
+    local carpetSpeed = 60
+    local flyDir = Vector3.new(0,0,0)
+    carpetConn = RunService.RenderStepped:Connect(function()
+        if not carpet or not carpet.Parent or not hrp or not hrp.Parent then
+            if carpet then carpet:Destroy() end
+            if carpetConn then carpetConn:Disconnect() end
+            carpet, carpetConn = nil, nil
+            return
+        end
+        -- 方向控制（WASD/空格/Shift）
+        flyDir = Vector3.new(0,0,0)
+        if UIS:IsKeyDown(Enum.KeyCode.W) then flyDir = flyDir + hrp.CFrame.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.S) then flyDir = flyDir - hrp.CFrame.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.A) then flyDir = flyDir - hrp.CFrame.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.D) then flyDir = flyDir + hrp.CFrame.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.Space) then flyDir = flyDir + Vector3.new(0,1,0) end
+        if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then flyDir = flyDir - Vector3.new(0,1,0) end
+        if flyDir.Magnitude > 0 then flyDir = flyDir.Unit else flyDir = Vector3.new(0,0,0) end
+        local target = hrp.Position + flyDir * carpetSpeed * RunService.RenderStepped:Wait()
+        carpet.Position = Vector3.new(target.X, carpet.Position.Y + (target.Y-carpet.Position.Y)*0.5, target.Z)
+        -- 贴地毯到人物底部
+        alignP.Position = carpet.Position
+        alignO.CFrame = hrp.CFrame - hrp.CFrame.p
+    end)
+    carpetObj = carpet
+end
+
 -- 主界面函数
 local function showMainUI()
     loginFrame.Visible = false
@@ -163,7 +249,7 @@ local function showMainUI()
     -- 外部容器
     local f = Instance.new("Frame", gui)
     mainFrame = f
-    f.Size = UDim2.new(0, 400, 0, 400)
+    f.Size = UDim2.new(0, 400, 0, 460)
     f.AnchorPoint = Vector2.new(0.5, 0.5)
     f.Position = UDim2.new(0.5, 0, 0.5, 0)
     f.BackgroundColor3 = Color3.fromRGB(35, 40, 58)
@@ -202,7 +288,11 @@ local function showMainUI()
     cb.TextColor3 = Color3.fromRGB(255, 255, 255)
     Instance.new("UICorner", cb).CornerRadius = UDim.new(1, 0)
     cb.ZIndex = 13
-    cb.MouseButton1Click:Connect(function() gui:Destroy() end)
+    cb.MouseButton1Click:Connect(function() 
+        if carpetObj then carpetObj:Destroy() carpetObj=nil end
+        if carpetConn then carpetConn:Disconnect() carpetConn=nil end
+        gui:Destroy()
+    end)
 
     -- 拖动
     local dragging, mousePos, framePos = false, nil, nil
@@ -227,7 +317,7 @@ local function showMainUI()
     scroll.Position = UDim2.new(0,0,0,54)
     scroll.Size = UDim2.new(1,0,1,-54)
     scroll.BackgroundTransparency = 1
-    scroll.CanvasSize = UDim2.new(0,0,0,400)
+    scroll.CanvasSize = UDim2.new(0,0,0,460)
     scroll.ScrollBarThickness = 8
     scroll.ScrollBarImageColor3 = Color3.fromRGB(38,150,255)
     scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -347,7 +437,7 @@ local function showMainUI()
             stepWalkBtn.BackgroundColor3 = Color3.fromRGB(95, 225, 105)
             stepWalkBtn.Text = "踏空行走：开启"
             createStepPart()
-            stepConn = game:GetService("RunService").RenderStepped:Connect(function()
+            stepConn = RunService.RenderStepped:Connect(function()
                 local char = p.Character
                 if char and char:FindFirstChild("HumanoidRootPart") then
                     local hrp = char.HumanoidRootPart
@@ -384,7 +474,7 @@ local function showMainUI()
         if enable then
             noclipBtn.BackgroundColor3 = Color3.fromRGB(95, 225, 105)
             noclipBtn.Text = "穿墙：开启"
-            noclipConn = game:GetService("RunService").Stepped:Connect(function()
+            noclipConn = RunService.Stepped:Connect(function()
                 if p.Character and p.Character:FindFirstChildOfClass("Humanoid") then
                     for _, v in pairs(p.Character:GetDescendants()) do
                         if v:IsA("BasePart") and v.CanCollide == true then v.CanCollide = false end
@@ -457,7 +547,7 @@ local function showMainUI()
             godBtn.BackgroundColor3 = Color3.fromRGB(255, 225, 70)
             godBtn.Text = "上帝模式：开启"
             -- 持续让人物无敌
-            godConn = game:GetService("RunService").RenderStepped:Connect(function()
+            godConn = RunService.RenderStepped:Connect(function()
                 local h = getHumanoid()
                 if h then
                     h.Health = h.MaxHealth or 100
@@ -495,10 +585,23 @@ local function showMainUI()
     Instance.new("UICorner", knifeBtn).CornerRadius = UDim.new(1,0)
     knifeBtn.MouseButton1Click:Connect(summonKnife)
 
+    -- 召唤飞行地毯
+    local carpetBtn = Instance.new("TextButton", scroll)
+    carpetBtn.Size = UDim2.new(0, 300, 0, 40)
+    carpetBtn.Position = UDim2.new(0, 50, 0, 350)
+    carpetBtn.BackgroundColor3 = Color3.fromRGB(130, 60, 255)
+    carpetBtn.Text = "召唤/取消飞行地毯"
+    carpetBtn.Font = Enum.Font.GothamBold
+    carpetBtn.TextSize = 20
+    carpetBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    carpetBtn.ZIndex = 11
+    Instance.new("UICorner", carpetBtn).CornerRadius = UDim.new(1,0)
+    carpetBtn.MouseButton1Click:Connect(summonCarpet)
+
     -- 分割线
     local sep = Instance.new("Frame", scroll)
     sep.Size = UDim2.new(1, -56, 0, 2)
-    sep.Position = UDim2.new(0, 28, 0, 342)
+    sep.Position = UDim2.new(0, 28, 0, 402)
     sep.BackgroundColor3 = Color3.fromRGB(38,150,255)
     sep.BorderSizePixel = 0
     sep.ZIndex = 11
@@ -506,16 +609,16 @@ local function showMainUI()
     -- 提示文本
     local tip = Instance.new("TextLabel", scroll)
     tip.Size = UDim2.new(1, -56, 0, 30)
-    tip.Position = UDim2.new(0, 28, 0, 360)
+    tip.Position = UDim2.new(0, 28, 0, 420)
     tip.BackgroundTransparency = 1
-    tip.Text = "功能说明：踏空行走=空气墙，穿墙=Noclip，无限跳=多段跳，上帝模式=无敌，刀=攻击他人"
+    tip.Text = "说明：踏空行走=空气墙，穿墙=Noclip，无限跳=多段跳，上帝模式=无敌，刀=攻击，地毯=WASD空格Shift飞行"
     tip.Font = Enum.Font.Gotham
     tip.TextSize = 16
     tip.TextColor3 = Color3.fromRGB(190,215,255)
     tip.TextXAlignment = Enum.TextXAlignment.Left
     tip.ZIndex = 11
 
-    scroll.CanvasSize = UDim2.new(0,0,0,400)
+    scroll.CanvasSize = UDim2.new(0,0,0,460)
 end
 
 loginBtn.MouseButton1Click:Connect(function()
