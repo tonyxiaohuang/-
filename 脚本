@@ -1,4 +1,4 @@
--- Roblox：启动弹出登录界面，输入“1”且点击确定后才进入主界面（含速度/踏空/穿墙/无限跳/最小化，已去除无限体力和自动刷新角色状态）
+-- Roblox：登录输入“1”进入。主界面可上下滑动，界面美化，外部有“隐藏界面/显示界面”按钮。含速度/踏空/穿墙/无限跳。
 
 if game.CoreGui:FindFirstChild("MyCustomUI") then game.CoreGui.MyCustomUI:Destroy() end
 
@@ -8,99 +8,136 @@ local gui = Instance.new("ScreenGui", game.CoreGui)
 gui.Name = "MyCustomUI"
 gui.ResetOnSpawn = false
 
+-- 隐藏/显示按钮（始终置顶）
+local toggleBtn = Instance.new("TextButton", gui)
+toggleBtn.Size = UDim2.new(0, 80, 0, 36)
+toggleBtn.Position = UDim2.new(0, 16, 0, 16)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(38,150,255)
+toggleBtn.Text = "隐藏界面"
+toggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 18
+toggleBtn.AutoButtonColor = true
+Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1, 0)
+toggleBtn.ZIndex = 20
+
 -- 登录界面
 local loginFrame = Instance.new("Frame", gui)
-loginFrame.Size = UDim2.new(0, 280, 0, 150)
+loginFrame.Size = UDim2.new(0, 310, 0, 180)
 loginFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 loginFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-loginFrame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+loginFrame.BackgroundColor3 = Color3.fromRGB(30,40,55)
 loginFrame.BorderSizePixel = 0
-Instance.new("UICorner", loginFrame).CornerRadius = UDim.new(0, 14)
+Instance.new("UICorner", loginFrame).CornerRadius = UDim.new(0, 18)
+loginFrame.ZIndex = 10
+
 local loginTitle = Instance.new("TextLabel", loginFrame)
-loginTitle.Size = UDim2.new(1, 0, 0, 40)
+loginTitle.Size = UDim2.new(1, 0, 0, 50)
 loginTitle.Position = UDim2.new(0,0,0,0)
 loginTitle.BackgroundTransparency = 1
-loginTitle.Text = "请输入1"
-loginTitle.Font = Enum.Font.SourceSansBold
-loginTitle.TextSize = 26
-loginTitle.TextColor3 = Color3.fromRGB(255,255,255)
+loginTitle.Text = "欢迎进入功能面板"
+loginTitle.Font = Enum.Font.GothamBold
+loginTitle.TextSize = 28
+loginTitle.TextColor3 = Color3.fromRGB(0,200,255)
+loginTitle.ZIndex = 11
+
+local loginTipText = Instance.new("TextLabel", loginFrame)
+loginTipText.Size = UDim2.new(1, -30, 0, 24)
+loginTipText.Position = UDim2.new(0,15,0,45)
+loginTipText.BackgroundTransparency = 1
+loginTipText.Text = "请输入“1”后点击确定进入主界面"
+loginTipText.Font = Enum.Font.Gotham
+loginTipText.TextSize = 17
+loginTipText.TextColor3 = Color3.fromRGB(190, 220, 255)
+loginTipText.ZIndex = 11
+
 local loginBox = Instance.new("TextBox", loginFrame)
-loginBox.Size = UDim2.new(0.7, 0, 0, 36)
-loginBox.Position = UDim2.new(0.15, 0, 0, 60)
-loginBox.BackgroundColor3 = Color3.fromRGB(60,60,60)
-loginBox.Font = Enum.Font.SourceSans
-loginBox.PlaceholderText = "输入1进入"
+loginBox.Size = UDim2.new(0.7, 0, 0, 38)
+loginBox.Position = UDim2.new(0.15, 0, 0, 80)
+loginBox.BackgroundColor3 = Color3.fromRGB(50,60,85)
+loginBox.Font = Enum.Font.Gotham
+loginBox.PlaceholderText = "在此输入1"
 loginBox.Text = ""
 loginBox.TextSize = 20
 loginBox.TextColor3 = Color3.fromRGB(255,255,255)
 loginBox.ClearTextOnFocus = false
 Instance.new("UICorner", loginBox).CornerRadius = UDim.new(1,0)
+loginBox.ZIndex = 11
+
 local loginBtn = Instance.new("TextButton", loginFrame)
-loginBtn.Size = UDim2.new(0.5, 0, 0, 36)
-loginBtn.Position = UDim2.new(0.25,0,0, 110)
-loginBtn.BackgroundColor3 = Color3.fromRGB(50, 120, 255)
+loginBtn.Size = UDim2.new(0.5, 0, 0, 38)
+loginBtn.Position = UDim2.new(0.25,0,0, 135)
+loginBtn.BackgroundColor3 = Color3.fromRGB(38,150,255)
 loginBtn.Text = "确定"
-loginBtn.Font = Enum.Font.SourceSansBold
+loginBtn.Font = Enum.Font.GothamBold
 loginBtn.TextSize = 20
 loginBtn.TextColor3 = Color3.fromRGB(255,255,255)
 Instance.new("UICorner",loginBtn).CornerRadius = UDim.new(1,0)
+loginBtn.ZIndex = 11
+
 local loginTip = Instance.new("TextLabel", loginFrame)
-loginTip.Size = UDim2.new(1,0,0,24)
+loginTip.Size = UDim2.new(1,0,0,22)
 loginTip.Position = UDim2.new(0,0,1,-22)
 loginTip.BackgroundTransparency = 1
 loginTip.Text = ""
-loginTip.Font = Enum.Font.SourceSans
-loginTip.TextSize = 16
+loginTip.Font = Enum.Font.Gotham
+loginTip.TextSize = 15
 loginTip.TextColor3 = Color3.fromRGB(240,80,80)
+loginTip.ZIndex = 11
+
+local mainFrame = nil
 
 -- 主界面函数
 local function showMainUI()
     loginFrame.Visible = false
 
+    -- 外部容器
     local f = Instance.new("Frame", gui)
-    f.Size = UDim2.new(0, 350, 0, 220)
+    mainFrame = f
+    f.Size = UDim2.new(0, 400, 0, 330)
     f.AnchorPoint = Vector2.new(0.5, 0.5)
     f.Position = UDim2.new(0.5, 0, 0.5, 0)
-    f.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    f.BackgroundColor3 = Color3.fromRGB(35, 40, 58)
     f.BorderSizePixel = 0
-    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 16)
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 20)
+    f.ZIndex = 10
 
-    -- 标题
-    local l = Instance.new("TextLabel", f)
-    l.Size = UDim2.new(1, 0, 0, 40)
+    -- 顶部装饰栏
+    local header = Instance.new("Frame", f)
+    header.Size = UDim2.new(1,0,0,50)
+    header.Position = UDim2.new(0,0,0,0)
+    header.BackgroundColor3 = Color3.fromRGB(38,150,255)
+    header.BorderSizePixel = 0
+    Instance.new("UICorner", header).CornerRadius = UDim.new(0, 16)
+    header.ZIndex = 11
+
+    local l = Instance.new("TextLabel", header)
+    l.Size = UDim2.new(1, -56, 1, 0)
+    l.Position = UDim2.new(0, 20, 0, 0)
     l.BackgroundTransparency = 1
     l.Text = "人物功能调节"
-    l.Font = Enum.Font.SourceSansBold
-    l.TextSize = 26
-    l.TextColor3 = Color3.fromRGB(255, 255, 255)
-    l.Name = "TitleLabel"
+    l.Font = Enum.Font.GothamBold
+    l.TextSize = 28
+    l.TextColor3 = Color3.fromRGB(255,255,255)
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    l.ZIndex = 12
 
     -- 关闭按钮
-    local cb = Instance.new("TextButton", f)
-    cb.Size = UDim2.new(0, 40, 0, 40)
-    cb.Position = UDim2.new(1, -45, 0, 5)
-    cb.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+    local cb = Instance.new("TextButton", header)
+    cb.Size = UDim2.new(0, 38, 0, 38)
+    cb.Position = UDim2.new(1, -46, 0, 6)
+    cb.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
     cb.Text = "X"
-    cb.Font = Enum.Font.SourceSansBold
-    cb.TextSize = 22
+    cb.Font = Enum.Font.GothamBold
+    cb.TextSize = 20
     cb.TextColor3 = Color3.fromRGB(255, 255, 255)
     Instance.new("UICorner", cb).CornerRadius = UDim.new(1, 0)
+    cb.ZIndex = 13
     cb.MouseButton1Click:Connect(function() gui:Destroy() end)
-
-    -- 最小化按钮
-    local minBtn = Instance.new("TextButton", f)
-    minBtn.Size = UDim2.new(0, 40, 0, 40)
-    minBtn.Position = UDim2.new(1, -90, 0, 5)
-    minBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-    minBtn.Text = "-"
-    minBtn.Font = Enum.Font.SourceSansBold
-    minBtn.TextSize = 28
-    minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Instance.new("UICorner", minBtn).CornerRadius = UDim.new(1, 0)
 
     -- 拖动
     local dragging, mousePos, framePos = false, nil, nil
-    f.InputBegan:Connect(function(i)
+    header.InputBegan:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true mousePos = i.Position framePos = f.Position
             i.Changed:Connect(function()
@@ -108,7 +145,7 @@ local function showMainUI()
             end)
         end
     end)
-    f.InputChanged:Connect(function(i)
+    header.InputChanged:Connect(function(i)
         if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
             local d = i.Position - mousePos
             f.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + d.X, framePos.Y.Scale, framePos.Y.Offset + d.Y)
@@ -116,54 +153,69 @@ local function showMainUI()
     end)
     UIS.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
 
+    -- 滚动区域
+    local scroll = Instance.new("ScrollingFrame", f)
+    scroll.Position = UDim2.new(0,0,0,54)
+    scroll.Size = UDim2.new(1,0,1,-54)
+    scroll.BackgroundTransparency = 1
+    scroll.CanvasSize = UDim2.new(0,0,0,340)
+    scroll.ScrollBarThickness = 8
+    scroll.ScrollBarImageColor3 = Color3.fromRGB(38,150,255)
+    scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    scroll.ZIndex = 10
+
+    -- 速度
+    local sl = Instance.new("TextLabel", scroll)
+    sl.Size = UDim2.new(0, 110, 0, 34)
+    sl.Position = UDim2.new(0, 28, 0, 16)
+    sl.BackgroundTransparency = 1
+    sl.Text = "人物速度:"
+    sl.Font = Enum.Font.Gotham
+    sl.TextSize = 20
+    sl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sl.TextXAlignment = Enum.TextXAlignment.Left
+    sl.ZIndex = 11
+
+    local sb = Instance.new("TextBox", scroll)
+    sb.Size = UDim2.new(0, 82, 0, 34)
+    sb.Position = UDim2.new(0, 130, 0, 16)
+    sb.BackgroundColor3 = Color3.fromRGB(50, 60, 85)
+    sb.Text = ""
+    sb.PlaceholderText = "默认16"
+    sb.Font = Enum.Font.Gotham
+    sb.TextSize = 18
+    sb.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sb.ClearTextOnFocus = false
+    sb.ZIndex = 11
+    Instance.new("UICorner", sb).CornerRadius = UDim.new(1, 0)
+
+    local sbtn = Instance.new("TextButton", scroll)
+    sbtn.Size = UDim2.new(0, 66, 0, 34)
+    sbtn.Position = UDim2.new(0, 224, 0, 16)
+    sbtn.BackgroundColor3 = Color3.fromRGB(38,150,255)
+    sbtn.Text = "设置"
+    sbtn.Font = Enum.Font.Gotham
+    sbtn.TextSize = 18
+    sbtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sbtn.ZIndex = 11
+    Instance.new("UICorner", sbtn).CornerRadius = UDim.new(1, 0)
+
+    local status = Instance.new("TextLabel", scroll)
+    status.Size = UDim2.new(1, -40, 0, 28)
+    status.Position = UDim2.new(0, 28, 0, 60)
+    status.BackgroundTransparency = 1
+    status.Text = ""
+    status.Font = Enum.Font.Gotham
+    status.TextSize = 18
+    status.TextColor3 = Color3.fromRGB(120, 255, 180)
+    status.TextXAlignment = Enum.TextXAlignment.Left
+    status.ZIndex = 11
+
     local p = Players.LocalPlayer
     local function getHumanoid()
         local c = p.Character or p.CharacterAdded:Wait()
         return c:FindFirstChildOfClass("Humanoid")
     end
-
-    -- 速度
-    local sl = Instance.new("TextLabel", f)
-    sl.Size = UDim2.new(0, 110, 0, 30)
-    sl.Position = UDim2.new(0, 20, 0, 60)
-    sl.BackgroundTransparency = 1
-    sl.Text = "人物速度:"
-    sl.Font = Enum.Font.SourceSans
-    sl.TextSize = 20
-    sl.TextColor3 = Color3.fromRGB(255, 255, 255)
-    sl.TextXAlignment = Enum.TextXAlignment.Left
-
-    local sb = Instance.new("TextBox", f)
-    sb.Size = UDim2.new(0, 70, 0, 30)
-    sb.Position = UDim2.new(0, 130, 0, 60)
-    sb.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    sb.Text = ""
-    sb.PlaceholderText = "默认16"
-    sb.Font = Enum.Font.SourceSans
-    sb.TextSize = 18
-    sb.TextColor3 = Color3.fromRGB(255, 255, 255)
-    sb.ClearTextOnFocus = false
-    Instance.new("UICorner", sb).CornerRadius = UDim.new(1, 0)
-
-    local sbtn = Instance.new("TextButton", f)
-    sbtn.Size = UDim2.new(0, 60, 0, 30)
-    sbtn.Position = UDim2.new(0, 210, 0, 60)
-    sbtn.BackgroundColor3 = Color3.fromRGB(50, 120, 255)
-    sbtn.Text = "设置"
-    sbtn.Font = Enum.Font.SourceSans
-    sbtn.TextSize = 18
-    sbtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Instance.new("UICorner", sbtn).CornerRadius = UDim.new(1, 0)
-
-    local status = Instance.new("TextLabel", f)
-    status.Size = UDim2.new(1, -40, 0, 30)
-    status.Position = UDim2.new(0, 20, 0, 110)
-    status.BackgroundTransparency = 1
-    status.Text = ""
-    status.Font = Enum.Font.SourceSans
-    status.TextSize = 18
-    status.TextColor3 = Color3.fromRGB(160, 255, 160)
-    status.TextXAlignment = Enum.TextXAlignment.Left
 
     sbtn.MouseButton1Click:Connect(function()
         local h = getHumanoid()
@@ -192,14 +244,15 @@ local function showMainUI()
 
     -- 踏空行走
     local stepWalkEnabled = false
-    local stepWalkBtn = Instance.new("TextButton", f)
-    stepWalkBtn.Size = UDim2.new(0, 120, 0, 36)
-    stepWalkBtn.Position = UDim2.new(0, 20, 0, 150)
-    stepWalkBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
+    local stepWalkBtn = Instance.new("TextButton", scroll)
+    stepWalkBtn.Size = UDim2.new(0, 140, 0, 40)
+    stepWalkBtn.Position = UDim2.new(0, 28, 0, 110)
+    stepWalkBtn.BackgroundColor3 = Color3.fromRGB(95, 225, 105)
     stepWalkBtn.Text = "踏空行走：关闭"
-    stepWalkBtn.Font = Enum.Font.SourceSansBold
+    stepWalkBtn.Font = Enum.Font.GothamBold
     stepWalkBtn.TextSize = 20
     stepWalkBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    stepWalkBtn.ZIndex = 11
     Instance.new("UICorner", stepWalkBtn).CornerRadius = UDim.new(1, 0)
     local stepPart = nil
     local stepConn = nil
@@ -222,7 +275,7 @@ local function showMainUI()
     local function enableStepWalk(enable)
         stepWalkEnabled = enable
         if enable then
-            stepWalkBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
+            stepWalkBtn.BackgroundColor3 = Color3.fromRGB(95, 225, 105)
             stepWalkBtn.Text = "踏空行走：开启"
             createStepPart()
             stepConn = game:GetService("RunService").RenderStepped:Connect(function()
@@ -246,20 +299,21 @@ local function showMainUI()
 
     -- 穿墙
     local noclipEnabled = false
-    local noclipBtn = Instance.new("TextButton", f)
-    noclipBtn.Size = UDim2.new(0, 120, 0, 36)
-    noclipBtn.Position = UDim2.new(0, 160, 0, 150)
-    noclipBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
+    local noclipBtn = Instance.new("TextButton", scroll)
+    noclipBtn.Size = UDim2.new(0, 140, 0, 40)
+    noclipBtn.Position = UDim2.new(0, 188, 0, 110)
+    noclipBtn.BackgroundColor3 = Color3.fromRGB(95, 225, 105)
     noclipBtn.Text = "穿墙：关闭"
-    noclipBtn.Font = Enum.Font.SourceSansBold
+    noclipBtn.Font = Enum.Font.GothamBold
     noclipBtn.TextSize = 20
     noclipBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    noclipBtn.ZIndex = 11
     Instance.new("UICorner", noclipBtn).CornerRadius = UDim.new(1, 0)
     local noclipConn = nil
     local function enableNoclip(enable)
         noclipEnabled = enable
         if enable then
-            noclipBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
+            noclipBtn.BackgroundColor3 = Color3.fromRGB(95, 225, 105)
             noclipBtn.Text = "穿墙：开启"
             noclipConn = game:GetService("RunService").Stepped:Connect(function()
                 if p.Character and p.Character:FindFirstChildOfClass("Humanoid") then
@@ -284,20 +338,21 @@ local function showMainUI()
 
     -- 无限跳
     local infjumpEnabled = false
-    local infjumpBtn = Instance.new("TextButton", f)
-    infjumpBtn.Size = UDim2.new(0, 120, 0, 36)
-    infjumpBtn.Position = UDim2.new(0, 90, 0, 200)
-    infjumpBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
+    local infjumpBtn = Instance.new("TextButton", scroll)
+    infjumpBtn.Size = UDim2.new(0, 300, 0, 40)
+    infjumpBtn.Position = UDim2.new(0, 50, 0, 170)
+    infjumpBtn.BackgroundColor3 = Color3.fromRGB(95, 225, 105)
     infjumpBtn.Text = "无限跳：关闭"
-    infjumpBtn.Font = Enum.Font.SourceSansBold
+    infjumpBtn.Font = Enum.Font.GothamBold
     infjumpBtn.TextSize = 20
     infjumpBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    infjumpBtn.ZIndex = 11
     Instance.new("UICorner", infjumpBtn).CornerRadius = UDim.new(1,0)
     local infjumpConn = nil
     local function enableInfJump(enable)
         infjumpEnabled = enable
         if enable then
-            infjumpBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
+            infjumpBtn.BackgroundColor3 = Color3.fromRGB(95, 225, 105)
             infjumpBtn.Text = "无限跳：开启"
             infjumpConn = UIS.JumpRequest:Connect(function()
                 local h = getHumanoid()
@@ -314,42 +369,28 @@ local function showMainUI()
     infjumpBtn.MouseButton1Click:Connect(function() enableInfJump(not infjumpEnabled) end)
     p.CharacterAdded:Connect(function() wait(1) enableInfJump(false) end)
 
-    -- 最小化
-    local isMin = false
-    local minSize = UDim2.new(0, 200, 0, 50)
-    local origSize = f.Size
-    local function setMinimized(min)
-        isMin = min
-        if min then
-            for _, v in ipairs(f:GetChildren()) do
-                if v~=l and v~=cb and v~=minBtn then
-                    v.Visible = false
-                end
-            end
-            f.Size = minSize
-            l.Text = "人物功能调节 (已最小化)"
-        else
-            for _, v in ipairs(f:GetChildren()) do
-                v.Visible = true
-            end
-            f.Size = origSize
-            l.Text = "人物功能调节"
-        end
-    end
-    minBtn.MouseButton1Click:Connect(function()
-        setMinimized(not isMin)
-    end)
+    -- 分割线
+    local sep = Instance.new("Frame", scroll)
+    sep.Size = UDim2.new(1, -56, 0, 2)
+    sep.Position = UDim2.new(0, 28, 0, 222)
+    sep.BackgroundColor3 = Color3.fromRGB(38,150,255)
+    sep.BorderSizePixel = 0
+    sep.ZIndex = 11
 
     -- 提示文本
-    local tip = Instance.new("TextLabel", f)
-    tip.Size = UDim2.new(1, -20, 0, 20)
-    tip.Position = UDim2.new(0, 10, 1, -24)
+    local tip = Instance.new("TextLabel", scroll)
+    tip.Size = UDim2.new(1, -56, 0, 30)
+    tip.Position = UDim2.new(0, 28, 0, 240)
     tip.BackgroundTransparency = 1
-    tip.Text = "功能：踏空行走=空气墙，穿墙=Noclip，无限跳=多段跳"
-    tip.Font = Enum.Font.SourceSans
+    tip.Text = "功能说明：踏空行走=空气墙，穿墙=Noclip，无限跳=多段跳"
+    tip.Font = Enum.Font.Gotham
     tip.TextSize = 16
-    tip.TextColor3 = Color3.fromRGB(200,200,200)
+    tip.TextColor3 = Color3.fromRGB(190,215,255)
     tip.TextXAlignment = Enum.TextXAlignment.Left
+    tip.ZIndex = 11
+
+    -- 滚动区域自动适应内容高度
+    scroll.CanvasSize = UDim2.new(0,0,0,280)
 end
 
 loginBtn.MouseButton1Click:Connect(function()
@@ -357,5 +398,16 @@ loginBtn.MouseButton1Click:Connect(function()
         showMainUI()
     else
         loginTip.Text = "输入错误，请输入1"
+    end
+end)
+
+-- 隐藏/显示主界面逻辑
+toggleBtn.MouseButton1Click:Connect(function()
+    if mainFrame and mainFrame.Visible then
+        mainFrame.Visible = false
+        toggleBtn.Text = "显示界面"
+    elseif mainFrame then
+        mainFrame.Visible = true
+        toggleBtn.Text = "隐藏界面"
     end
 end)
