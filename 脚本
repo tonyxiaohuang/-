@@ -1,4 +1,4 @@
--- Roblox：登录输入“1”进入。主界面可上下滑动，界面美化，外部有“隐藏界面/显示界面”按钮。含速度/踏空/穿墙/无限跳/上帝模式
+-- Roblox：登录输入“1”进入。主界面可上下滑动，外部有“隐藏界面/显示界面”，含速度/踏空/穿墙/无限跳/上帝模式/召唤一把造成伤害的刀
 
 if game.CoreGui:FindFirstChild("MyCustomUI") then game.CoreGui.MyCustomUI:Destroy() end
 
@@ -87,6 +87,75 @@ loginTip.ZIndex = 11
 
 local mainFrame = nil
 
+-- 召唤造成伤害的刀
+local function summonKnife()
+    local p = Players.LocalPlayer
+    local char = p.Character or p.CharacterAdded:Wait()
+    if not char then return end
+
+    -- 刀工具
+    local tool = Instance.new("Tool")
+    tool.Name = "Knife"
+    tool.RequiresHandle = true
+    tool.CanBeDropped = true
+
+    -- 刀柄
+    local handle = Instance.new("Part")
+    handle.Name = "Handle"
+    handle.Size = Vector3.new(1, 4, 0.4)
+    handle.BrickColor = BrickColor.new("Really black")
+    handle.Material = Enum.Material.Metal
+    handle.TopSurface = Enum.SurfaceType.Smooth
+    handle.BottomSurface = Enum.SurfaceType.Smooth
+    handle.CanCollide = false
+    handle.Massless = true
+    handle.Parent = tool
+
+    -- 刀刃
+    local blade = Instance.new("Part")
+    blade.Name = "Blade"
+    blade.Size = Vector3.new(0.3, 3, 0.05)
+    blade.Position = handle.Position + Vector3.new(0, 3.5, 0)
+    blade.BrickColor = BrickColor.new("Institutional white")
+    blade.Material = Enum.Material.Metal
+    blade.TopSurface = Enum.SurfaceType.Smooth
+    blade.BottomSurface = Enum.SurfaceType.Smooth
+    blade.CanCollide = false
+    blade.Massless = true
+    blade.Parent = tool
+
+    -- 焊接刀刃到刀柄
+    local weld = Instance.new("WeldConstraint")
+    weld.Part0 = handle
+    weld.Part1 = blade
+    weld.Parent = handle
+
+    -- 刀柄必须为Handle
+    tool.Grip = CFrame.new(0, -2, 0)
+    handle.Name = "Handle"
+    handle.Parent = tool
+
+    -- 刀伤害逻辑
+    local debounce = false
+    tool.Activated:Connect(function()
+        local con
+        con = blade.Touched:Connect(function(hit)
+            if debounce then return end
+            debounce = true
+            local h = hit.Parent and hit.Parent:FindFirstChildOfClass("Humanoid")
+            if h and h ~= (Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")) then
+                h:TakeDamage(60)
+            end
+            wait(0.1)
+            debounce = false
+            if con then con:Disconnect() end
+        end)
+    end)
+
+    -- 工具放入背包
+    tool.Parent = p.Backpack
+end
+
 -- 主界面函数
 local function showMainUI()
     loginFrame.Visible = false
@@ -94,7 +163,7 @@ local function showMainUI()
     -- 外部容器
     local f = Instance.new("Frame", gui)
     mainFrame = f
-    f.Size = UDim2.new(0, 400, 0, 360)
+    f.Size = UDim2.new(0, 400, 0, 400)
     f.AnchorPoint = Vector2.new(0.5, 0.5)
     f.Position = UDim2.new(0.5, 0, 0.5, 0)
     f.BackgroundColor3 = Color3.fromRGB(35, 40, 58)
@@ -158,7 +227,7 @@ local function showMainUI()
     scroll.Position = UDim2.new(0,0,0,54)
     scroll.Size = UDim2.new(1,0,1,-54)
     scroll.BackgroundTransparency = 1
-    scroll.CanvasSize = UDim2.new(0,0,0,360)
+    scroll.CanvasSize = UDim2.new(0,0,0,400)
     scroll.ScrollBarThickness = 8
     scroll.ScrollBarImageColor3 = Color3.fromRGB(38,150,255)
     scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -395,26 +464,16 @@ local function showMainUI()
                     h.NameDisplayDistance = 0 -- 隐藏血条
                     h.BreakJointsOnDeath = false
                     h.PlatformStand = false
-                    -- 防止WalkSpeed/JumpPower被还原
                     h:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
                     h:SetStateEnabled(Enum.HumanoidStateType.Physics, true)
                 end
             end)
-            -- 也可监听受伤自动恢复
-            if h then
-                h.HealthChanged:Connect(function(val)
-                    if godEnabled and h then
-                        h.Health = h.MaxHealth or 100
-                    end
-                end)
-            end
         else
             godBtn.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
             godBtn.Text = "上帝模式：关闭"
             if godConn then godConn:Disconnect() godConn = nil end
             local h = getHumanoid()
             if h then
-                -- 恢复默认
                 h:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
                 h.NameDisplayDistance = 100
             end
@@ -423,10 +482,23 @@ local function showMainUI()
     godBtn.MouseButton1Click:Connect(function() enableGodMode(not godEnabled) end)
     p.CharacterAdded:Connect(function() wait(1) enableGodMode(false) end)
 
+    -- 召唤造成伤害的刀
+    local knifeBtn = Instance.new("TextButton", scroll)
+    knifeBtn.Size = UDim2.new(0, 300, 0, 40)
+    knifeBtn.Position = UDim2.new(0, 50, 0, 290)
+    knifeBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+    knifeBtn.Text = "召唤伤害刀"
+    knifeBtn.Font = Enum.Font.GothamBold
+    knifeBtn.TextSize = 20
+    knifeBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    knifeBtn.ZIndex = 11
+    Instance.new("UICorner", knifeBtn).CornerRadius = UDim.new(1,0)
+    knifeBtn.MouseButton1Click:Connect(summonKnife)
+
     -- 分割线
     local sep = Instance.new("Frame", scroll)
     sep.Size = UDim2.new(1, -56, 0, 2)
-    sep.Position = UDim2.new(0, 28, 0, 282)
+    sep.Position = UDim2.new(0, 28, 0, 342)
     sep.BackgroundColor3 = Color3.fromRGB(38,150,255)
     sep.BorderSizePixel = 0
     sep.ZIndex = 11
@@ -434,17 +506,16 @@ local function showMainUI()
     -- 提示文本
     local tip = Instance.new("TextLabel", scroll)
     tip.Size = UDim2.new(1, -56, 0, 30)
-    tip.Position = UDim2.new(0, 28, 0, 300)
+    tip.Position = UDim2.new(0, 28, 0, 360)
     tip.BackgroundTransparency = 1
-    tip.Text = "功能说明：踏空行走=空气墙，穿墙=Noclip，无限跳=多段跳，上帝模式=无敌"
+    tip.Text = "功能说明：踏空行走=空气墙，穿墙=Noclip，无限跳=多段跳，上帝模式=无敌，刀=攻击他人"
     tip.Font = Enum.Font.Gotham
     tip.TextSize = 16
     tip.TextColor3 = Color3.fromRGB(190,215,255)
     tip.TextXAlignment = Enum.TextXAlignment.Left
     tip.ZIndex = 11
 
-    -- 滚动区域自动适应内容高度
-    scroll.CanvasSize = UDim2.new(0,0,0,340)
+    scroll.CanvasSize = UDim2.new(0,0,0,400)
 end
 
 loginBtn.MouseButton1Click:Connect(function()
@@ -455,7 +526,6 @@ loginBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 隐藏/显示主界面逻辑
 toggleBtn.MouseButton1Click:Connect(function()
     if mainFrame and mainFrame.Visible then
         mainFrame.Visible = false
