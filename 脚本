@@ -1,4 +1,4 @@
--- Roblox：登录输入“1”进入。主界面可上下滑动（滑动区域更大，UI优化），外部有“隐藏界面/显示界面”，含速度/踏空/穿墙/无限跳/上帝模式/锁血（无敌）/人物自定义旋转/玩家碰到别人直接秒杀（无刀）
+-- Roblox：登录输入“1”进入。主界面可上下滑动（滑动区域更大，UI优化），外部有“隐藏界面/显示界面”，含速度/踏空/穿墙/无限跳/上帝模式/锁血（无敌）/人物自定义旋转/玩家碰到别人直接秒杀/选择玩家传送和杀死
 
 if game.CoreGui:FindFirstChild("MyCustomUI") then game.CoreGui.MyCustomUI:Destroy() end
 
@@ -167,6 +167,121 @@ local function enableLockHealth(enable)
 end
 Players.LocalPlayer.CharacterAdded:Connect(function() if lockHealthEnabled then enableLockHealth(true) end end)
 
+-- 选择玩家传送和杀死功能
+local function createPlayerSelect(parent, yOffset)
+    local label = Instance.new("TextLabel", parent)
+    label.Size = UDim2.new(1, -40, 0, 28)
+    label.Position = UDim2.new(0, 28, 0, yOffset)
+    label.BackgroundTransparency = 1
+    label.Text = "玩家列表："
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 20
+    label.TextColor3 = Color3.fromRGB(190,215,255)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 11
+
+    local playerDrop = Instance.new("TextButton", parent)
+    playerDrop.Size = UDim2.new(0, 180, 0, 34)
+    playerDrop.Position = UDim2.new(0, 28, 0, yOffset + 36)
+    playerDrop.BackgroundColor3 = Color3.fromRGB(38,150,255)
+    playerDrop.Text = "选择玩家"
+    playerDrop.Font = Enum.Font.Gotham
+    playerDrop.TextSize = 18
+    playerDrop.TextColor3 = Color3.fromRGB(255,255,255)
+    playerDrop.ZIndex = 12
+    Instance.new("UICorner", playerDrop).CornerRadius = UDim.new(1, 0)
+
+    -- 下拉列表
+    local dropdownFrame = Instance.new("Frame", parent)
+    dropdownFrame.Size = UDim2.new(0, 180, 0, 140)
+    dropdownFrame.Position = UDim2.new(0, 28, 0, yOffset + 70)
+    dropdownFrame.BackgroundColor3 = Color3.fromRGB(30, 60, 100)
+    dropdownFrame.Visible = false
+    dropdownFrame.BorderSizePixel = 0
+    dropdownFrame.ZIndex = 30
+    Instance.new("UICorner", dropdownFrame).CornerRadius = UDim.new(0, 8)
+
+    local listLayout = Instance.new("UIListLayout", dropdownFrame)
+    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    listLayout.Padding = UDim.new(0, 4)
+
+    local selectedPlayer = nil
+
+    local function refreshPlayerList()
+        for _,v in ipairs(dropdownFrame:GetChildren()) do
+            if v:IsA("TextButton") then v:Destroy() end
+        end
+        for _,plr in ipairs(Players:GetPlayers()) do
+            if plr ~= Players.LocalPlayer then
+                local btn = Instance.new("TextButton", dropdownFrame)
+                btn.Size = UDim2.new(1, -10, 0, 28)
+                btn.BackgroundColor3 = Color3.fromRGB(58,180,255)
+                btn.Text = plr.Name
+                btn.Font = Enum.Font.Gotham
+                btn.TextSize = 18
+                btn.TextColor3 = Color3.fromRGB(255,255,255)
+                btn.ZIndex = 31
+                Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+                btn.MouseButton1Click:Connect(function()
+                    selectedPlayer = plr
+                    playerDrop.Text = plr.Name
+                    dropdownFrame.Visible = false
+                end)
+            end
+        end
+    end
+
+    playerDrop.MouseButton1Click:Connect(function()
+        dropdownFrame.Visible = not dropdownFrame.Visible
+        if dropdownFrame.Visible then
+            refreshPlayerList()
+        end
+    end)
+
+    -- 传送按钮
+    local tpBtn = Instance.new("TextButton", parent)
+    tpBtn.Size = UDim2.new(0, 90, 0, 34)
+    tpBtn.Position = UDim2.new(0, 220, 0, yOffset + 36)
+    tpBtn.BackgroundColor3 = Color3.fromRGB(70,220,170)
+    tpBtn.Text = "传送到"
+    tpBtn.Font = Enum.Font.GothamBold
+    tpBtn.TextSize = 18
+    tpBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    tpBtn.ZIndex = 12
+    Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(1,0)
+    tpBtn.MouseButton1Click:Connect(function()
+        if selectedPlayer and selectedPlayer.Character and selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local p = Players.LocalPlayer
+            local myChar = p.Character
+            if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                myChar.HumanoidRootPart.CFrame = selectedPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
+            end
+        end
+    end)
+
+    -- 杀死按钮
+    local killBtn = Instance.new("TextButton", parent)
+    killBtn.Size = UDim2.new(0, 80, 0, 34)
+    killBtn.Position = UDim2.new(0, 320, 0, yOffset + 36)
+    killBtn.BackgroundColor3 = Color3.fromRGB(255,60,60)
+    killBtn.Text = "杀死"
+    killBtn.Font = Enum.Font.GothamBold
+    killBtn.TextSize = 18
+    killBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    killBtn.ZIndex = 12
+    Instance.new("UICorner", killBtn).CornerRadius = UDim.new(1,0)
+    killBtn.MouseButton1Click:Connect(function()
+        if selectedPlayer and selectedPlayer.Character then
+            local h = selectedPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if h then
+                h.Health = 0
+            end
+        end
+    end)
+
+    return dropdownFrame
+end
+
 -- 主界面函数
 local function showMainUI()
     loginFrame.Visible = false
@@ -174,7 +289,7 @@ local function showMainUI()
     -- 外部容器
     local f = Instance.new("Frame", gui)
     mainFrame = f
-    f.Size = UDim2.new(0, 400, 0, 440)
+    f.Size = UDim2.new(0, 400, 0, 540)
     f.AnchorPoint = Vector2.new(0.5, 0.5)
     f.Position = UDim2.new(0.5, 0, 0.5, 0)
     f.BackgroundColor3 = Color3.fromRGB(35, 40, 58)
@@ -243,7 +358,7 @@ local function showMainUI()
     scroll.Position = UDim2.new(0,0,0,54)
     scroll.Size = UDim2.new(1,0,1,-54)
     scroll.BackgroundTransparency = 1
-    scroll.CanvasSize = UDim2.new(0,0,0,680) -- 增大滑动区域长度
+    scroll.CanvasSize = UDim2.new(0,0,0,780) -- 滑动区域更大
     scroll.ScrollBarThickness = 8
     scroll.ScrollBarImageColor3 = Color3.fromRGB(38,150,255)
     scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -552,10 +667,13 @@ local function showMainUI()
     end)
     updateKillerBtn()
 
+    -- 选择玩家传送和杀死
+    createPlayerSelect(scroll, 350)
+
     -- 人物旋转
     local rotateBtn = Instance.new("TextButton", scroll)
     rotateBtn.Size = UDim2.new(0, 180, 0, 40)
-    rotateBtn.Position = UDim2.new(0, 50, 0, 350)
+    rotateBtn.Position = UDim2.new(0, 50, 0, 500)
     rotateBtn.BackgroundColor3 = Color3.fromRGB(100, 180, 255)
     rotateBtn.Text = "人物旋转：关闭"
     rotateBtn.Font = Enum.Font.GothamBold
@@ -566,7 +684,7 @@ local function showMainUI()
 
     local rotateSpeedBox = Instance.new("TextBox", scroll)
     rotateSpeedBox.Size = UDim2.new(0, 80, 0, 40)
-    rotateSpeedBox.Position = UDim2.new(0, 240, 0, 350)
+    rotateSpeedBox.Position = UDim2.new(0, 240, 0, 500)
     rotateSpeedBox.BackgroundColor3 = Color3.fromRGB(70,90,140)
     rotateSpeedBox.Text = tostring(rotateSpeed)
     rotateSpeedBox.PlaceholderText = "转速(度/秒)"
@@ -611,7 +729,7 @@ local function showMainUI()
     -- 分割线
     local sep = Instance.new("Frame", scroll)
     sep.Size = UDim2.new(1, -56, 0, 2)
-    sep.Position = UDim2.new(0, 28, 0, 402)
+    sep.Position = UDim2.new(0, 28, 0, 552)
     sep.BackgroundColor3 = Color3.fromRGB(38,150,255)
     sep.BorderSizePixel = 0
     sep.ZIndex = 11
@@ -619,16 +737,16 @@ local function showMainUI()
     -- 提示文本
     local tip = Instance.new("TextLabel", scroll)
     tip.Size = UDim2.new(1, -56, 0, 60)
-    tip.Position = UDim2.new(0, 28, 0, 420)
+    tip.Position = UDim2.new(0, 28, 0, 570)
     tip.BackgroundTransparency = 1
-    tip.Text = "说明：踏空=空气墙，穿墙=Noclip，无限跳=多段跳，上帝=无敌，锁血=持续满血，碰到玩家直接秒杀，人物旋转可自定义速度。滑动区域已加大。"
+    tip.Text = "说明：踏空=空气墙，穿墙=Noclip，无限跳=多段跳，上帝=无敌，锁血=持续满血，碰到玩家直接秒杀，选择玩家可传送/杀死，人物旋转可自定义速度。滑动区域已加大。"
     tip.Font = Enum.Font.Gotham
     tip.TextSize = 16
     tip.TextColor3 = Color3.fromRGB(190,215,255)
     tip.TextXAlignment = Enum.TextXAlignment.Left
     tip.ZIndex = 11
 
-    scroll.CanvasSize = UDim2.new(0,0,0,680)
+    scroll.CanvasSize = UDim2.new(0,0,0,780)
 end
 
 loginBtn.MouseButton1Click:Connect(function()
