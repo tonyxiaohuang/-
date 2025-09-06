@@ -1,4 +1,4 @@
--- Roblox：登录输入“1”进入。主界面可上下滑动，外部有“隐藏界面/显示界面”，含速度/踏空/穿墙/无限跳/上帝模式/召唤伤害刀/召唤飞行地毯
+-- Roblox：登录输入“1”进入。主界面可上下滑动，外部有“隐藏界面/显示界面”，含速度/踏空/穿墙/无限跳/上帝模式/召唤伤害刀/人物自定义旋转
 
 if game.CoreGui:FindFirstChild("MyCustomUI") then game.CoreGui.MyCustomUI:Destroy() end
 
@@ -157,90 +157,27 @@ local function summonKnife()
     tool.Parent = p.Backpack
 end
 
--- 召唤飞行地毯
-local carpetConn = nil
-local carpetObj = nil
-local function summonCarpet()
-    -- 防止重复召唤
-    if carpetObj and carpetObj.Parent then
-        carpetObj:Destroy()
-        if carpetConn then carpetConn:Disconnect() end
-        carpetObj, carpetConn = nil, nil
-        return
-    end
+-- 人物旋转功能
+local rotateConn = nil
+local rotateEnabled = false
+local rotateSpeed = 180 -- 默认每秒180度
+local function enableRotate(enable, speed)
     local p = Players.LocalPlayer
-    local char = p.Character or p.CharacterAdded:Wait()
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local hrp = char.HumanoidRootPart
-
-    -- 创建地毯
-    local carpet = Instance.new("Part")
-    carpet.Name = "MagicCarpet"
-    carpet.Size = Vector3.new(7, 0.5, 7)
-    carpet.Color = Color3.fromRGB(235, 215, 80)
-    carpet.Material = Enum.Material.Fabric
-    carpet.Anchored = false
-    carpet.CanCollide = true
-    carpet.TopSurface = Enum.SurfaceType.Smooth
-    carpet.BottomSurface = Enum.SurfaceType.Smooth
-    carpet.Position = hrp.Position - Vector3.new(0,2.5,0)
-    carpet.Parent = workspace
-
-    -- 装饰（紫色边框）
-    local deco = Instance.new("SelectionBox")
-    deco.Adornee = carpet
-    deco.Color3 = Color3.fromRGB(100,0,220)
-    deco.LineThickness = 0.13
-    deco.SurfaceTransparency = 0.5
-    deco.Parent = carpet
-
-    -- 物理约束，地毯始终跟随人物
-    local alignP = Instance.new("AlignPosition", carpet)
-    alignP.MaxForce = 90000
-    alignP.Responsiveness = 15
-    alignP.Mode = Enum.PositionAlignmentMode.OneAttachment
-
-    local att0 = Instance.new("Attachment", carpet)
-    local att1 = Instance.new("Attachment", hrp)
-    alignP.Attachment0 = att0
-    alignP.Attachment1 = att1
-
-    -- 地毯保持水平
-    local alignO = Instance.new("AlignOrientation", carpet)
-    alignO.MaxTorque = 90000
-    alignO.Responsiveness = 10
-    alignO.Mode = Enum.OrientationAlignmentMode.OneAttachment
-    local attO0 = Instance.new("Attachment", carpet)
-    alignO.Attachment0 = attO0
-    alignO.Attachment1 = att1
-
-    -- 飞行控制
-    local carpetSpeed = 60
-    local flyDir = Vector3.new(0,0,0)
-    carpetConn = RunService.RenderStepped:Connect(function()
-        if not carpet or not carpet.Parent or not hrp or not hrp.Parent then
-            if carpet then carpet:Destroy() end
-            if carpetConn then carpetConn:Disconnect() end
-            carpet, carpetConn = nil, nil
-            return
-        end
-        -- 方向控制（WASD/空格/Shift）
-        flyDir = Vector3.new(0,0,0)
-        if UIS:IsKeyDown(Enum.KeyCode.W) then flyDir = flyDir + hrp.CFrame.LookVector end
-        if UIS:IsKeyDown(Enum.KeyCode.S) then flyDir = flyDir - hrp.CFrame.LookVector end
-        if UIS:IsKeyDown(Enum.KeyCode.A) then flyDir = flyDir - hrp.CFrame.RightVector end
-        if UIS:IsKeyDown(Enum.KeyCode.D) then flyDir = flyDir + hrp.CFrame.RightVector end
-        if UIS:IsKeyDown(Enum.KeyCode.Space) then flyDir = flyDir + Vector3.new(0,1,0) end
-        if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then flyDir = flyDir - Vector3.new(0,1,0) end
-        if flyDir.Magnitude > 0 then flyDir = flyDir.Unit else flyDir = Vector3.new(0,0,0) end
-        local target = hrp.Position + flyDir * carpetSpeed * RunService.RenderStepped:Wait()
-        carpet.Position = Vector3.new(target.X, carpet.Position.Y + (target.Y-carpet.Position.Y)*0.5, target.Z)
-        -- 贴地毯到人物底部
-        alignP.Position = carpet.Position
-        alignO.CFrame = hrp.CFrame - hrp.CFrame.p
-    end)
-    carpetObj = carpet
+    local function getHRP()
+        return (p.Character or p.CharacterAdded:Wait()):FindFirstChild("HumanoidRootPart")
+    end
+    rotateEnabled = enable
+    if rotateConn then rotateConn:Disconnect() rotateConn = nil end
+    if enable then
+        rotateConn = RunService.RenderStepped:Connect(function(dt)
+            local hrp = getHRP()
+            if hrp then
+                hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(speed or rotateSpeed)*dt, 0)
+            end
+        end)
+    end
 end
+Players.LocalPlayer.CharacterAdded:Connect(function() if rotateEnabled then enableRotate(true, rotateSpeed) end end)
 
 -- 主界面函数
 local function showMainUI()
@@ -289,8 +226,7 @@ local function showMainUI()
     Instance.new("UICorner", cb).CornerRadius = UDim.new(1, 0)
     cb.ZIndex = 13
     cb.MouseButton1Click:Connect(function() 
-        if carpetObj then carpetObj:Destroy() carpetObj=nil end
-        if carpetConn then carpetConn:Disconnect() carpetConn=nil end
+        if rotateConn then rotateConn:Disconnect() end
         gui:Destroy()
     end)
 
@@ -585,18 +521,61 @@ local function showMainUI()
     Instance.new("UICorner", knifeBtn).CornerRadius = UDim.new(1,0)
     knifeBtn.MouseButton1Click:Connect(summonKnife)
 
-    -- 召唤飞行地毯
-    local carpetBtn = Instance.new("TextButton", scroll)
-    carpetBtn.Size = UDim2.new(0, 300, 0, 40)
-    carpetBtn.Position = UDim2.new(0, 50, 0, 350)
-    carpetBtn.BackgroundColor3 = Color3.fromRGB(130, 60, 255)
-    carpetBtn.Text = "召唤/取消飞行地毯"
-    carpetBtn.Font = Enum.Font.GothamBold
-    carpetBtn.TextSize = 20
-    carpetBtn.TextColor3 = Color3.fromRGB(255,255,255)
-    carpetBtn.ZIndex = 11
-    Instance.new("UICorner", carpetBtn).CornerRadius = UDim.new(1,0)
-    carpetBtn.MouseButton1Click:Connect(summonCarpet)
+    -- 人物旋转
+    local rotateBtn = Instance.new("TextButton", scroll)
+    rotateBtn.Size = UDim2.new(0, 180, 0, 40)
+    rotateBtn.Position = UDim2.new(0, 50, 0, 350)
+    rotateBtn.BackgroundColor3 = Color3.fromRGB(100, 180, 255)
+    rotateBtn.Text = "人物旋转：关闭"
+    rotateBtn.Font = Enum.Font.GothamBold
+    rotateBtn.TextSize = 20
+    rotateBtn.TextColor3 = Color3.fromRGB(50,50,50)
+    rotateBtn.ZIndex = 11
+    Instance.new("UICorner", rotateBtn).CornerRadius = UDim.new(1,0)
+
+    local rotateSpeedBox = Instance.new("TextBox", scroll)
+    rotateSpeedBox.Size = UDim2.new(0, 80, 0, 40)
+    rotateSpeedBox.Position = UDim2.new(0, 240, 0, 350)
+    rotateSpeedBox.BackgroundColor3 = Color3.fromRGB(70,90,140)
+    rotateSpeedBox.Text = tostring(rotateSpeed)
+    rotateSpeedBox.PlaceholderText = "转速(度/秒)"
+    rotateSpeedBox.Font = Enum.Font.Gotham
+    rotateSpeedBox.TextSize = 20
+    rotateSpeedBox.TextColor3 = Color3.fromRGB(255,255,255)
+    rotateSpeedBox.ClearTextOnFocus = false
+    rotateSpeedBox.ZIndex = 11
+    Instance.new("UICorner", rotateSpeedBox).CornerRadius = UDim.new(1,0)
+
+    local function updateRotateState()
+        if rotateEnabled then
+            rotateBtn.BackgroundColor3 = Color3.fromRGB(100,180,255)
+            rotateBtn.Text = "人物旋转：开启"
+        else
+            rotateBtn.BackgroundColor3 = Color3.fromRGB(170,170,170)
+            rotateBtn.Text = "人物旋转：关闭"
+        end
+    end
+    rotateBtn.MouseButton1Click:Connect(function()
+        rotateEnabled = not rotateEnabled
+        if rotateEnabled then
+            local speed = tonumber(rotateSpeedBox.Text) or rotateSpeed
+            rotateSpeed = speed
+            enableRotate(true, rotateSpeed)
+        else
+            enableRotate(false)
+        end
+        updateRotateState()
+    end)
+    rotateSpeedBox.FocusLost:Connect(function(enter)
+        if rotateEnabled then
+            local newspeed = tonumber(rotateSpeedBox.Text)
+            if newspeed and newspeed > 0 then
+                rotateSpeed = newspeed
+                enableRotate(true, rotateSpeed)
+            end
+        end
+    end)
+    updateRotateState()
 
     -- 分割线
     local sep = Instance.new("Frame", scroll)
@@ -611,7 +590,7 @@ local function showMainUI()
     tip.Size = UDim2.new(1, -56, 0, 30)
     tip.Position = UDim2.new(0, 28, 0, 420)
     tip.BackgroundTransparency = 1
-    tip.Text = "说明：踏空行走=空气墙，穿墙=Noclip，无限跳=多段跳，上帝模式=无敌，刀=攻击，地毯=WASD空格Shift飞行"
+    tip.Text = "说明：踏空=空气墙，穿墙=Noclip，无限跳=多段跳，上帝=无敌，刀=攻击，人物旋转可自定义速度"
     tip.Font = Enum.Font.Gotham
     tip.TextSize = 16
     tip.TextColor3 = Color3.fromRGB(190,215,255)
