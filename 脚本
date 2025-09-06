@@ -1,887 +1,1159 @@
--- Roblox自定义界面：速度调节、踏空行走、穿墙、被遗弃无限体力、无限跳、最小化
+-- Roblox：启动弹出登录界面，输入“1”且点击确定后才进入主界面（含速度/踏空/穿墙/无限体力/无限跳/最小化）
 if game.CoreGui:FindFirstChild("MyCustomUI") then game.CoreGui.MyCustomUI:Destroy() end
+
 local UIS = game:GetService("UserInputService")
 local gui = Instance.new("ScreenGui", game.CoreGui)
 gui.Name = "MyCustomUI"
 gui.ResetOnSpawn = false
-local f = Instance.new("Frame", gui)
-f.Size = UDim2.new(0, 350, 0, 300)
-f.AnchorPoint = Vector2.new(0.5, 0.5)
-f.Position = UDim2.new(0.5, 0, 0.5, 0)
-f.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-f.BorderSizePixel = 0
-Instance.new("UICorner", f).CornerRadius = UDim.new(0, 16)
 
--- 标题
-local l = Instance.new("TextLabel", f)
-l.Size = UDim2.new(1, 0, 0, 40)
-l.BackgroundTransparency = 1
-l.Text = "人物功能调节"
-l.Font = Enum.Font.SourceSansBold
-l.TextSize = 26
-l.TextColor3 = Color3.fromRGB(255, 255, 255)
-l.Name = "TitleLabel"
+-- 登录界面
+local loginFrame = Instance.new("Frame", gui)
+loginFrame.Size = UDim2.new(0, 280, 0, 150)
+loginFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+loginFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+loginFrame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+loginFrame.BorderSizePixel = 0
+Instance.new("UICorner", loginFrame).CornerRadius = UDim.new(0, 14)
+local loginTitle = Instance.new("TextLabel", loginFrame)
+loginTitle.Size = UDim2.new(1, 0, 0, 40)
+loginTitle.Position = UDim2.new(0,0,0,0)
+loginTitle.BackgroundTransparency = 1
+loginTitle.Text = "请输入1"
+loginTitle.Font = Enum.Font.SourceSansBold
+loginTitle.TextSize = 26
+loginTitle.TextColor3 = Color3.fromRGB(255,255,255)
+local loginBox = Instance.new("TextBox", loginFrame)
+loginBox.Size = UDim2.new(0.7, 0, 0, 36)
+loginBox.Position = UDim2.new(0.15, 0, 0, 60)
+loginBox.BackgroundColor3 = Color3.fromRGB(60,60,60)
+loginBox.Font = Enum.Font.SourceSans
+loginBox.PlaceholderText = "输入1进入"
+loginBox.Text = ""
+loginBox.TextSize = 20
+loginBox.TextColor3 = Color3.fromRGB(255,255,255)
+loginBox.ClearTextOnFocus = false
+Instance.new("UICorner", loginBox).CornerRadius = UDim.new(1,0)
+local loginBtn = Instance.new("TextButton", loginFrame)
+loginBtn.Size = UDim2.new(0.5, 0, 0, 36)
+loginBtn.Position = UDim2.new(0.25,0,0, 110)
+loginBtn.BackgroundColor3 = Color3.fromRGB(50, 120, 255)
+loginBtn.Text = "确定"
+loginBtn.Font = Enum.Font.SourceSansBold
+loginBtn.TextSize = 20
+loginBtn.TextColor3 = Color3.fromRGB(255,255,255)
+Instance.new("UICorner",loginBtn).CornerRadius = UDim.new(1,0)
+local loginTip = Instance.new("TextLabel", loginFrame)
+loginTip.Size = UDim2.new(1,0,0,24)
+loginTip.Position = UDim2.new(0,0,1,-22)
+loginTip.BackgroundTransparency = 1
+loginTip.Text = ""
+loginTip.Font = Enum.Font.SourceSans
+loginTip.TextSize = 16
+loginTip.TextColor3 = Color3.fromRGB(240,80,80)
 
--- 关闭按钮
-local cb = Instance.new("TextButton", f)
-cb.Size = UDim2.new(0, 40, 0, 40)
-cb.Position = UDim2.new(1, -45, 0, 5)
-cb.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-cb.Text = "X"
-cb.Font = Enum.Font.SourceSansBold
-cb.TextSize = 22
-cb.TextColor3 = Color3.fromRGB(255, 255, 255)
-Instance.new("UICorner", cb).CornerRadius = UDim.new(1, 0)
-cb.Name = "CloseBtn"
-cb.MouseButton1Click:Connect(function() gui:Destroy() end)
+-- 主界面函数
+local function showMainUI()
+    loginFrame.Visible = false
 
--- 最小化按钮
-local minBtn = Instance.new("TextButton", f)
-minBtn.Size = UDim2.new(0, 40, 0, 40)
-minBtn.Position = UDim2.new(1, -90, 0, 5)
-minBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-minBtn.Text = "-"
-minBtn.Font = Enum.Font.SourceSansBold
-minBtn.TextSize = 28
-minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-Instance.new("UICorner", minBtn).CornerRadius = UDim.new(1, 0)
-minBtn.Name = "MinimizeBtn"
+    local f = Instance.new("Frame", gui)
+    f.Size = UDim2.new(0, 350, 0, 300)
+    f.AnchorPoint = Vector2.new(0.5, 0.5)
+    f.Position = UDim2.new(0.5, 0, 0.5, 0)
+    f.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    f.BorderSizePixel = 0
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 16)
 
--- 拖动
-local dragging, mousePos, framePos = false, nil, nil
-f.InputBegan:Connect(function(i)
-    if i.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true mousePos = i.Position framePos = f.Position
-        i.Changed:Connect(function()
-            if i.UserInputState == Enum.UserInputState.End then dragging = false end
-        end)
-    end
-end)
-f.InputChanged:Connect(function(i)
-    if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
-        local d = i.Position - mousePos
-        f.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + d.X, framePos.Y.Scale, framePos.Y.Offset + d.Y)
-    end
-end)
-UIS.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+    -- 标题
+    local l = Instance.new("TextLabel", f)
+    l.Size = UDim2.new(1, 0, 0, 40)
+    l.BackgroundTransparency = 1
+    l.Text = "人物功能调节"
+    l.Font = Enum.Font.SourceSansBold
+    l.TextSize = 26
+    l.TextColor3 = Color3.fromRGB(255, 255, 255)
+    l.Name = "TitleLabel"
 
-local p = game.Players.LocalPlayer
-local function getHumanoid()
-    local c = p.Character or p.CharacterAdded:Wait()
-    return c:FindFirstChildOfClass("Humanoid")
-end
+    -- 关闭按钮
+    local cb = Instance.new("TextButton", f)
+    cb.Size = UDim2.new(0, 40, 0, 40)
+    cb.Position = UDim2.new(1, -45, 0, 5)
+    cb.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+    cb.Text = "X"
+    cb.Font = Enum.Font.SourceSansBold
+    cb.TextSize = 22
+    cb.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", cb).CornerRadius = UDim.new(1, 0)
+    cb.MouseButton1Click:Connect(function() gui:Destroy() end)
 
--- 速度
-local sl = Instance.new("TextLabel", f)
-sl.Size = UDim2.new(0, 110, 0, 30)
-sl.Position = UDim2.new(0, 20, 0, 60)
-sl.BackgroundTransparency = 1
-sl.Text = "人物速度:"
-sl.Font = Enum.Font.SourceSans
-sl.TextSize = 20
-sl.TextColor3 = Color3.fromRGB(255, 255, 255)
-sl.TextXAlignment = Enum.TextXAlignment.Left
-sl.Name = "SpeedLabel"
+    -- 最小化按钮
+    local minBtn = Instance.new("TextButton", f)
+    minBtn.Size = UDim2.new(0, 40, 0, 40)
+    minBtn.Position = UDim2.new(1, -90, 0, 5)
+    minBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    minBtn.Text = "-"
+    minBtn.Font = Enum.Font.SourceSansBold
+    minBtn.TextSize = 28
+    minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", minBtn).CornerRadius = UDim.new(1, 0)
 
-local sb = Instance.new("TextBox", f)
-sb.Size = UDim2.new(0, 70, 0, 30)
-sb.Position = UDim2.new(0, 130, 0, 60)
-sb.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-sb.Text = ""
-sb.PlaceholderText = "默认16"
-sb.Font = Enum.Font.SourceSans
-sb.TextSize = 18
-sb.TextColor3 = Color3.fromRGB(255, 255, 255)
-sb.ClearTextOnFocus = false
-Instance.new("UICorner", sb).CornerRadius = UDim.new(1, 0)
-sb.Name = "SpeedBox"
-
-local sbtn = Instance.new("TextButton", f)
-sbtn.Size = UDim2.new(0, 60, 0, 30)
-sbtn.Position = UDim2.new(0, 210, 0, 60)
-sbtn.BackgroundColor3 = Color3.fromRGB(50, 120, 255)
-sbtn.Text = "设置"
-sbtn.Font = Enum.Font.SourceSans
-sbtn.TextSize = 18
-sbtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-Instance.new("UICorner", sbtn).CornerRadius = UDim.new(1, 0)
-sbtn.Name = "SpeedBtn"
-
-local status = Instance.new("TextLabel", f)
-status.Size = UDim2.new(1, -40, 0, 30)
-status.Position = UDim2.new(0, 20, 0, 110)
-status.BackgroundTransparency = 1
-status.Text = ""
-status.Font = Enum.Font.SourceSans
-status.TextSize = 18
-status.TextColor3 = Color3.fromRGB(160, 255, 160)
-status.TextXAlignment = Enum.TextXAlignment.Left
-status.Name = "StatusLabel"
-
-sbtn.MouseButton1Click:Connect(function()
-    local h = getHumanoid()
-    if h then
-        local v = tonumber(sb.Text)
-        if v and v > 0 then
-            h.WalkSpeed = v
-            status.Text = "人物速度已设置为：" .. v
-        else
-            status.Text = "请输入有效的速度数值"
+    -- 拖动
+    local dragging, mousePos, framePos = false, nil, nil
+    f.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true mousePos = i.Position framePos = f.Position
+            i.Changed:Connect(function()
+                if i.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
         end
-    else
-        status.Text = "未检测到人物Humanoid"
-    end
-end)
-local function updateStatus()
-    local h = getHumanoid()
-    if h then
-        status.Text = string.format("当前速度:%d", h.WalkSpeed)
-    else
-        status.Text = "未检测到人物Humanoid"
-    end
-end
-updateStatus()
-p.CharacterAdded:Connect(function() wait(1) updateStatus() end)
+    end)
+    f.InputChanged:Connect(function(i)
+        if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+            local d = i.Position - mousePos
+            f.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + d.X, framePos.Y.Scale, framePos.Y.Offset + d.Y)
+        end
+    end)
+    UIS.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
 
--- 踏空行走
-local stepWalkEnabled = false
-local stepWalkBtn = Instance.new("TextButton", f)
-stepWalkBtn.Size = UDim2.new(0, 120, 0, 36)
-stepWalkBtn.Position = UDim2.new(0, 20, 0, 150)
-stepWalkBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
-stepWalkBtn.Text = "踏空行走：关闭"
-stepWalkBtn.Font = Enum.Font.SourceSansBold
-stepWalkBtn.TextSize = 20
-stepWalkBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-Instance.new("UICorner", stepWalkBtn).CornerRadius = UDim.new(1, 0)
-stepWalkBtn.Name = "StepWalkBtn"
-local stepPart = nil
-local stepConn = nil
-local function createStepPart()
-    if stepPart and stepPart.Parent then return stepPart end
-    stepPart = Instance.new("Part")
-    stepPart.Anchored = true
-    stepPart.Size = Vector3.new(5, 1, 5)
-    stepPart.Transparency = 1
-    stepPart.CanCollide = true
-    stepPart.Name = "StepAir"
-    stepPart.TopSurface = Enum.SurfaceType.Smooth
-    stepPart.BottomSurface = Enum.SurfaceType.Smooth
-    stepPart.Parent = workspace
-    return stepPart
-end
-local function removeStepPart()
-    if stepPart then stepPart:Destroy() stepPart = nil end
-end
-local function enableStepWalk(enable)
-    stepWalkEnabled = enable
-    if enable then
-        stepWalkBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
-        stepWalkBtn.Text = "踏空行走：开启"
-        createStepPart()
-        stepConn = game:GetService("RunService").RenderStepped:Connect(function()
-            local char = p.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local hrp = char.HumanoidRootPart
-                stepPart.Position = Vector3.new(hrp.Position.X, hrp.Position.Y - 3.1, hrp.Position.Z)
+    local p = game.Players.LocalPlayer
+    local function getHumanoid()
+        local c = p.Character or p.CharacterAdded:Wait()
+        return c:FindFirstChildOfClass("Humanoid")
+    end
+
+    -- 速度
+    local sl = Instance.new("TextLabel", f)
+    sl.Size = UDim2.new(0, 110, 0, 30)
+    sl.Position = UDim2.new(0, 20, 0, 60)
+    sl.BackgroundTransparency = 1
+    sl.Text = "人物速度:"
+    sl.Font = Enum.Font.SourceSans
+    sl.TextSize = 20
+    sl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sl.TextXAlignment = Enum.TextXAlignment.Left
+
+    local sb = Instance.new("TextBox", f)
+    sb.Size = UDim2.new(0, 70, 0, 30)
+    sb.Position = UDim2.new(0, 130, 0, 60)
+    sb.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    sb.Text = ""
+    sb.PlaceholderText = "默认16"
+    sb.Font = Enum.Font.SourceSans
+    sb.TextSize = 18
+    sb.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sb.ClearTextOnFocus = false
+    Instance.new("UICorner", sb).CornerRadius = UDim.new(1, 0)
+
+    local sbtn = Instance.new("TextButton", f)
+    sbtn.Size = UDim2.new(0, 60, 0, 30)
+    sbtn.Position = UDim2.new(0, 210, 0, 60)
+    sbtn.BackgroundColor3 = Color3.fromRGB(50, 120, 255)
+    sbtn.Text = "设置"
+    sbtn.Font = Enum.Font.SourceSans
+    sbtn.TextSize = 18
+    sbtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", sbtn).CornerRadius = UDim.new(1, 0)
+
+    local status = Instance.new("TextLabel", f)
+    status.Size = UDim2.new(1, -40, 0, 30)
+    status.Position = UDim2.new(0, 20, 0, 110)
+    status.BackgroundTransparency = 1
+    status.Text = ""
+    status.Font = Enum.Font.SourceSans
+    status.TextSize = 18
+    status.TextColor3 = Color3.fromRGB(160, 255, 160)
+    status.TextXAlignment = Enum.TextXAlignment.Left
+
+    sbtn.MouseButton1Click:Connect(function()
+        local h = getHumanoid()
+        if h then
+            local v = tonumber(sb.Text)
+            if v and v > 0 then
+                h.WalkSpeed = v
+                status.Text = "人物速度已设置为：" .. v
             else
-                removeStepPart()
+                status.Text = "请输入有效的速度数值"
             end
-        end)
-    else
-        stepWalkBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-        stepWalkBtn.Text = "踏空行走：关闭"
-        if stepConn then stepConn:Disconnect() stepConn = nil end
-        removeStepPart()
-    end
-end
-stepWalkBtn.MouseButton1Click:Connect(function() enableStepWalk(not stepWalkEnabled) end)
-p.CharacterAdded:Connect(function() wait(1) enableStepWalk(false) end)
-
--- 穿墙
-local noclipEnabled = false
-local noclipBtn = Instance.new("TextButton", f)
-noclipBtn.Size = UDim2.new(0, 120, 0, 36)
-noclipBtn.Position = UDim2.new(0, 160, 0, 150)
-noclipBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
-noclipBtn.Text = "穿墙：关闭"
-noclipBtn.Font = Enum.Font.SourceSansBold
-noclipBtn.TextSize = 20
-noclipBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-Instance.new("UICorner", noclipBtn).CornerRadius = UDim.new(1, 0)
-noclipBtn.Name = "NoclipBtn"
-local noclipConn = nil
-local function enableNoclip(enable)
-    noclipEnabled = enable
-    if enable then
-        noclipBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
-        noclipBtn.Text = "穿墙：开启"
-        noclipConn = game:GetService("RunService").Stepped:Connect(function()
-            if p.Character and p.Character:FindFirstChildOfClass("Humanoid") then
-                for _, v in pairs(p.Character:GetDescendants()) do
-                    if v:IsA("BasePart") and v.CanCollide == true then v.CanCollide = false end
-                end
-            end
-        end)
-    else
-        noclipBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-        noclipBtn.Text = "穿墙：关闭"
-        if noclipConn then noclipConn:Disconnect() noclipConn = nil end
-        if p.Character then
-            for _, v in pairs(p.Character:GetDescendants()) do
-                if v:IsA("BasePart") then v.CanCollide = true end
-            end
-        end
-    end
-end
-noclipBtn.MouseButton1Click:Connect(function() enableNoclip(not noclipEnabled) end)
-p.CharacterAdded:Connect(function() wait(1) enableNoclip(false) end)
-
--- 无限体力
-local staminaEnabled = false
-local staminaBtn = Instance.new("TextButton", f)
-staminaBtn.Size = UDim2.new(0, 120, 0, 36)
-staminaBtn.Position = UDim2.new(0, 20, 0, 200)
-staminaBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
-staminaBtn.Text = "无限体力：关闭"
-staminaBtn.Font = Enum.Font.SourceSansBold
-staminaBtn.TextSize = 20
-staminaBtn.TextColor3 = Color3.fromRGB(255,255,255)
-Instance.new("UICorner", staminaBtn).CornerRadius = UDim.new(1,0)
-staminaBtn.Name = "StaminaBtn"
-local staminaConn = nil
-local function enableStamina(enable)
-    staminaEnabled = enable
-    if enable then
-        staminaBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
-        staminaBtn.Text = "无限体力：开启"
-        staminaConn = game:GetService("RunService").RenderStepped:Connect(function()
-            local char = p.Character
-            if char then
-                -- Roblox被遗弃（Abandoned）游戏专用体力机制
-                -- 常见变量路径：LocalPlayer.PlayerScripts.Sprint.Stamina 或本地存储变量
-                -- 适配主流Abandoned脚本
-                p.PlayerGui:FindFirstChild("StaminaBar") -- gui检测（可选）
-                -- 方式1：常见本地脚本变量法
-                local ps = p:FindFirstChild("PlayerScripts")
-                if ps then
-                    for _,scr in ipairs(ps:GetChildren()) do
-                        if scr:IsA("LocalScript") and scr.Name:lower():find("sprint") then
-                            local env = getfenv and getfenv(scr) or nil
-                            if env and env.Stamina then
-                                env.Stamina.Value = env.MaxStamina and env.MaxStamina.Value or 100
-                            end
-                        end
-                    end
-                end
-                -- 方式2：直接暴力遍历character/body属性（部分版本）
-                if char:FindFirstChild("Stamina") then
-                    local st = char.Stamina
-                    if st:IsA("NumberValue") then st.Value = st.MaxValue or 100 end
-                end
-            end
-        end)
-    else
-        staminaBtn.BackgroundColor3 = Color3.fromRGB(170,0,0)
-        staminaBtn.Text = "无限体力：关闭"
-        if staminaConn then staminaConn:Disconnect() staminaConn = nil end
-    end
-end
-staminaBtn.MouseButton1Click:Connect(function() enableStamina(not staminaEnabled) end)
-p.CharacterAdded:Connect(function() wait(1) enableStamina(false) end)
-
--- 无限跳
-local infjumpEnabled = false
-local infjumpBtn = Instance.new("TextButton", f)
-infjumpBtn.Size = UDim2.new(0, 120, 0, 36)
-infjumpBtn.Position = UDim2.new(0, 160, 0, 200)
-infjumpBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
-infjumpBtn.Text = "无限跳：关闭"
-infjumpBtn.Font = Enum.Font.SourceSansBold
-infjumpBtn.TextSize = 20
-infjumpBtn.TextColor3 = Color3.fromRGB(255,255,255)
-Instance.new("UICorner", infjumpBtn).CornerRadius = UDim.new(1,0)
-infjumpBtn.Name = "InfJumpBtn"
-local infjumpConn = nil
-local function enableInfJump(enable)
-    infjumpEnabled = enable
-    if enable then
-        infjumpBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
-        infjumpBtn.Text = "无限跳：开启"
-        infjumpConn = UIS.JumpRequest:Connect(function()
-            local h = getHumanoid()
-            if h then
-                h:ChangeState(Enum.HumanoidStateType.Jumping)
-            end
-        end)
-    else
-        infjumpBtn.BackgroundColor3 = Color3.fromRGB(170,0,0)
-        infjumpBtn.Text = "无限跳：关闭"
-        if infjumpConn then infjumpConn:Disconnect() infjumpConn = nil end
-    end
-end
-infjumpBtn.MouseButton1Click:Connect(function() enableInfJump(not infjumpEnabled) end)
-p.CharacterAdded:Connect(function() wait(1) enableInfJump(false) end)
-
--- 最小化功能
-local isMin = false
-local minSize = UDim2.new(0, 200, 0, 50)
-local origSize = f.Size
-local origPos = f.Position
-local function setMinimized(min)
-    isMin = min
-    if min then
-        -- 隐藏所有非标题/按钮控件
-        for _, v in ipairs(f:GetChildren()) do
-            if v~=l and v~=cb and v~=minBtn then
-                v.Visible = false
-            end
-        end
-        f.Size = minSize
-        l.Text = "人物功能调节 (已最小化)"
-    else
-        for _, v in ipairs(f:GetChildren()) do
-            v.Visible = true
-        end
-        f.Size = origSize
-        l.Text = "人物功能调节"
-    end
-end
-minBtn.MouseButton1Click:Connect(function()
-    setMinimized(not isMin)
-end)
-
--- 提示文本
-local tip = Instance.new("TextLabel", f)
-tip.Size = UDim2.new(1, -20, 0, 20)
-tip.Position = UDim2.new(0, 10, 1, -24)
-tip.BackgroundTransparency = 1
-tip.Text = "功能：踏空行走=空气墙，穿墙=Noclip，无限体力适用于被遗弃，无限跳=多段跳"
-tip.Font = Enum.Font.SourceSans
-tip.TextSize = 16
-tip.TextColor3 = Color3.fromRGB(200, 200, 200)
-tip.TextXAlignment = Enum.TextXAlignment.Left
-tip.Name = "TipLabel"            if i.UserInputState == Enum.UserInputState.End then dragging = false end
-        end)
-    end
-end)
-f.InputChanged:Connect(function(i)
-    if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
-        local d = i.Position - mousePos
-        f.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + d.X, framePos.Y.Scale, framePos.Y.Offset + d.Y)
-    end
-end)
-UIS.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
-local p = game.Players.LocalPlayer
-local function getHumanoid()
-    local c = p.Character or p.CharacterAdded:Wait()
-    return c:FindFirstChildOfClass("Humanoid")
-end
--- 速度
-local sl = Instance.new("TextLabel", f)
-sl.Size = UDim2.new(0, 110, 0, 30)
-sl.Position = UDim2.new(0, 20, 0, 60)
-sl.BackgroundTransparency = 1
-sl.Text = "人物速度:"
-sl.Font = Enum.Font.SourceSans
-sl.TextSize = 20
-sl.TextColor3 = Color3.fromRGB(255, 255, 255)
-sl.TextXAlignment = Enum.TextXAlignment.Left
-local sb = Instance.new("TextBox", f)
-sb.Size = UDim2.new(0, 70, 0, 30)
-sb.Position = UDim2.new(0, 130, 0, 60)
-sb.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-sb.Text = ""
-sb.PlaceholderText = "默认16"
-sb.Font = Enum.Font.SourceSans
-sb.TextSize = 18
-sb.TextColor3 = Color3.fromRGB(255, 255, 255)
-sb.ClearTextOnFocus = false
-Instance.new("UICorner", sb).CornerRadius = UDim.new(1, 0)
-local sbtn = Instance.new("TextButton", f)
-sbtn.Size = UDim2.new(0, 60, 0, 30)
-sbtn.Position = UDim2.new(0, 210, 0, 60)
-sbtn.BackgroundColor3 = Color3.fromRGB(50, 120, 255)
-sbtn.Text = "设置"
-sbtn.Font = Enum.Font.SourceSans
-sbtn.TextSize = 18
-sbtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-Instance.new("UICorner", sbtn).CornerRadius = UDim.new(1, 0)
-local status = Instance.new("TextLabel", f)
-status.Size = UDim2.new(1, -40, 0, 30)
-status.Position = UDim2.new(0, 20, 0, 110)
-status.BackgroundTransparency = 1
-status.Text = ""
-status.Font = Enum.Font.SourceSans
-status.TextSize = 18
-status.TextColor3 = Color3.fromRGB(160, 255, 160)
-status.TextXAlignment = Enum.TextXAlignment.Left
-sbtn.MouseButton1Click:Connect(function()
-    local h = getHumanoid()
-    if h then
-        local v = tonumber(sb.Text)
-        if v and v > 0 then
-            h.WalkSpeed = v
-            status.Text = "人物速度已设置为：" .. v
         else
-            status.Text = "请输入有效的速度数值"
+            status.Text = "未检测到人物Humanoid"
         end
-    else
-        status.Text = "未检测到人物Humanoid"
-    end
-end)
-local function updateStatus()
-    local h = getHumanoid()
-    if h then
-        status.Text = string.format("当前速度:%d", h.WalkSpeed)
-    else
-        status.Text = "未检测到人物Humanoid"
-    end
-end
-updateStatus()
-p.CharacterAdded:Connect(function() wait(1) updateStatus() end)
--- 踏空行走
-local stepWalkEnabled = false
-local stepWalkBtn = Instance.new("TextButton", f)
-stepWalkBtn.Size = UDim2.new(0, 120, 0, 36)
-stepWalkBtn.Position = UDim2.new(0, 20, 0, 150)
-stepWalkBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
-stepWalkBtn.Text = "踏空行走：关闭"
-stepWalkBtn.Font = Enum.Font.SourceSansBold
-stepWalkBtn.TextSize = 20
-stepWalkBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-Instance.new("UICorner", stepWalkBtn).CornerRadius = UDim.new(1, 0)
-local stepPart = nil
-local stepConn = nil
-local function createStepPart()
-    if stepPart and stepPart.Parent then return stepPart end
-    stepPart = Instance.new("Part")
-    stepPart.Anchored = true
-    stepPart.Size = Vector3.new(5, 1, 5)
-    stepPart.Transparency = 1
-    stepPart.CanCollide = true
-    stepPart.Name = "StepAir"
-    stepPart.TopSurface = Enum.SurfaceType.Smooth
-    stepPart.BottomSurface = Enum.SurfaceType.Smooth
-    stepPart.Parent = workspace
-    return stepPart
-end
-local function removeStepPart()
-    if stepPart then stepPart:Destroy() stepPart = nil end
-end
-local function enableStepWalk(enable)
-    stepWalkEnabled = enable
-    if enable then
-        stepWalkBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
-        stepWalkBtn.Text = "踏空行走：开启"
-        createStepPart()
-        stepConn = game:GetService("RunService").RenderStepped:Connect(function()
-            local char = p.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local hrp = char.HumanoidRootPart
-                stepPart.Position = Vector3.new(hrp.Position.X, hrp.Position.Y - 3.1, hrp.Position.Z)
-            else
-                removeStepPart()
-            end
-        end)
-    else
-        stepWalkBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-        stepWalkBtn.Text = "踏空行走：关闭"
-        if stepConn then stepConn:Disconnect() stepConn = nil end
-        removeStepPart()
-    end
-end
-stepWalkBtn.MouseButton1Click:Connect(function() enableStepWalk(not stepWalkEnabled) end)
-p.CharacterAdded:Connect(function() wait(1) enableStepWalk(false) end)
--- 穿墙
-local noclipEnabled = false
-local noclipBtn = Instance.new("TextButton", f)
-noclipBtn.Size = UDim2.new(0, 120, 0, 36)
-noclipBtn.Position = UDim2.new(0, 160, 0, 150)
-noclipBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
-noclipBtn.Text = "穿墙：关闭"
-noclipBtn.Font = Enum.Font.SourceSansBold
-noclipBtn.TextSize = 20
-noclipBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-Instance.new("UICorner", noclipBtn).CornerRadius = UDim.new(1, 0)
-local noclipConn = nil
-local function enableNoclip(enable)
-    noclipEnabled = enable
-    if enable then
-        noclipBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
-        noclipBtn.Text = "穿墙：开启"
-        noclipConn = game:GetService("RunService").Stepped:Connect(function()
-            if p.Character and p.Character:FindFirstChildOfClass("Humanoid") then
-                for _, v in pairs(p.Character:GetDescendants()) do
-                    if v:IsA("BasePart") and v.CanCollide == true then v.CanCollide = false end
-                end
-            end
-        end)
-    else
-        noclipBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-        noclipBtn.Text = "穿墙：关闭"
-        if noclipConn then noclipConn:Disconnect() noclipConn = nil end
-        if p.Character then
-            for _, v in pairs(p.Character:GetDescendants()) do
-                if v:IsA("BasePart") then v.CanCollide = true end
-            end
-        end
-    end
-end
-noclipBtn.MouseButton1Click:Connect(function() enableNoclip(not noclipEnabled) end)
-p.CharacterAdded:Connect(function() wait(1) enableNoclip(false) end)
--- 无限体力（被遗弃/abandoned模式专用）
-local staminaEnabled = false
-local staminaBtn = Instance.new("TextButton", f)
-staminaBtn.Size = UDim2.new(0, 120, 0, 36)
-staminaBtn.Position = UDim2.new(0, 90, 0, 200)
-staminaBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
-staminaBtn.Text = "无限体力：关闭"
-staminaBtn.Font = Enum.Font.SourceSansBold
-staminaBtn.TextSize = 20
-staminaBtn.TextColor3 = Color3.fromRGB(255,255,255)
-Instance.new("UICorner", staminaBtn).CornerRadius = UDim.new(1,0)
-local staminaConn = nil
-local function enableStamina(enable)
-    staminaEnabled = enable
-    if enable then
-        staminaBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
-        staminaBtn.Text = "无限体力：开启"
-        staminaConn = game:GetService("RunService").RenderStepped:Connect(function()
-            local char = p.Character
-            if char then
-                -- Roblox被遗弃（Abandoned）游戏专用体力机制
-                -- 常见变量路径：LocalPlayer.PlayerScripts.Sprint.Stamina 或本地存储变量
-                -- 适配主流Abandoned脚本
-                p.PlayerGui:FindFirstChild("StaminaBar") -- gui检测（可选）
-                -- 方式1：常见本地脚本变量法
-                local s = nil
-                local ps = p:FindFirstChild("PlayerScripts")
-                if ps then
-                    for _,scr in ipairs(ps:GetChildren()) do
-                        if scr:IsA("LocalScript") and scr.Name:lower():find("sprint") then
-                            -- 尝试索引Script里的Stamina变量
-                            local env = getfenv and getfenv(scr) or nil
-                            if env and env.Stamina then
-                                env.Stamina.Value = env.MaxStamina and env.MaxStamina.Value or 100
-                            end
-                        end
-                    end
-                end
-                -- 方式2：直接暴力遍历character/body属性（部分版本）
-                if char:FindFirstChild("Stamina") then
-                    local st = char.Stamina
-                    if st:IsA("NumberValue") then st.Value = st.MaxValue or 100 end
-                end
-            end
-        end)
-    else
-        staminaBtn.BackgroundColor3 = Color3.fromRGB(170,0,0)
-        staminaBtn.Text = "无限体力：关闭"
-        if staminaConn then staminaConn:Disconnect() staminaConn = nil end
-    end
-end
-staminaBtn.MouseButton1Click:Connect(function() enableStamina(not staminaEnabled) end)
-p.CharacterAdded:Connect(function() wait(1) enableStamina(false) end)
--- 提示文本
-local tip = Instance.new("TextLabel", f)
-tip.Size = UDim2.new(1, -20, 0, 20)
-tip.Position = UDim2.new(0, 10, 1, -24)
-tip.BackgroundTransparency = 1
-tip.Text = "功能：踏空行走=空气墙，穿墙=Noclip，无限体力适用于被遗弃"
-tip.Font = Enum.Font.SourceSans
-tip.TextSize = 16
-tip.TextColor3 = Color3.fromRGB(200, 200, 200)
-tip.TextXAlignment = Enum.TextXAlignment.Left
--- 关闭按钮
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 40, 0, 40)
-closeBtn.Position = UDim2.new(1, -45, 0, 5)
-closeBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-closeBtn.Text = "X"
-closeBtn.Font = Enum.Font.SourceSansBold
-closeBtn.TextSize = 22
-closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
-closeBtn.Parent = frame
-
-local closeCorner = Instance.new("UICorner")
-closeCorner.CornerRadius = UDim.new(1,0)
-closeCorner.Parent = closeBtn
-
-closeBtn.MouseButton1Click:Connect(function()
-    screenGui:Destroy()
-end)
-
--------------------------
--- 全区域拖动功能
--------------------------
-local dragging = false
-local dragInput, mousePos, framePos
-
-frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        mousePos = input.Position
-        framePos = frame.Position
-
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-frame.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - mousePos
-        frame.Position = UDim2.new(
-            framePos.X.Scale, framePos.X.Offset + delta.X,
-            framePos.Y.Scale, framePos.Y.Offset + delta.Y
-        )
-    end
-end)
-
-UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
-end)
-
--------------------------
--- 角色属性调节部分
--------------------------
-local player = game.Players.LocalPlayer
-local function getHumanoid()
-    local char = player.Character or player.CharacterAdded:Wait()
-    return char:FindFirstChildOfClass("Humanoid")
-end
-
--- 移速标签
-local speedLabel = Instance.new("TextLabel")
-speedLabel.Size = UDim2.new(0, 110, 0, 30)
-speedLabel.Position = UDim2.new(0, 20, 0, 60)
-speedLabel.BackgroundTransparency = 1
-speedLabel.Text = "人物速度:"
-speedLabel.Font = Enum.Font.SourceSans
-speedLabel.TextSize = 20
-speedLabel.TextColor3 = Color3.fromRGB(255,255,255)
-speedLabel.TextXAlignment = Enum.TextXAlignment.Left
-speedLabel.Parent = frame
-
--- 移速输入框
-local speedBox = Instance.new("TextBox")
-speedBox.Size = UDim2.new(0, 70, 0, 30)
-speedBox.Position = UDim2.new(0, 130, 0, 60)
-speedBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-speedBox.Text = ""
-speedBox.PlaceholderText = "默认16"
-speedBox.Font = Enum.Font.SourceSans
-speedBox.TextSize = 18
-speedBox.TextColor3 = Color3.fromRGB(255,255,255)
-speedBox.ClearTextOnFocus = false
-speedBox.Parent = frame
-local speedCorner = Instance.new("UICorner")
-speedCorner.CornerRadius = UDim.new(1,0)
-speedCorner.Parent = speedBox
-
--- 移速确认按钮
-local speedBtn = Instance.new("TextButton")
-speedBtn.Size = UDim2.new(0, 60, 0, 30)
-speedBtn.Position = UDim2.new(0, 210, 0, 60)
-speedBtn.BackgroundColor3 = Color3.fromRGB(50, 120, 255)
-speedBtn.Text = "设置"
-speedBtn.Font = Enum.Font.SourceSans
-speedBtn.TextSize = 18
-speedBtn.TextColor3 = Color3.fromRGB(255,255,255)
-speedBtn.Parent = frame
-local speedBtnCorner = Instance.new("UICorner")
-speedBtnCorner.CornerRadius = UDim.new(1,0)
-speedBtnCorner.Parent = speedBtn
-
--- 当前属性显示
-local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(1, -40, 0, 30)
-statusLabel.Position = UDim2.new(0, 20, 0, 110)
-statusLabel.BackgroundTransparency = 1
-statusLabel.Text = ""
-statusLabel.Font = Enum.Font.SourceSans
-statusLabel.TextSize = 18
-statusLabel.TextColor3 = Color3.fromRGB(160,255,160)
-statusLabel.TextXAlignment = Enum.TextXAlignment.Left
-statusLabel.Parent = frame
-
-speedBtn.MouseButton1Click:Connect(function()
-    local humanoid = getHumanoid()
-    if humanoid then
-        local val = tonumber(speedBox.Text)
-        if val and val > 0 then
-            humanoid.WalkSpeed = val
-            statusLabel.Text = "人物速度已设置为："..val
+    end)
+    local function updateStatus()
+        local h = getHumanoid()
+        if h then
+            status.Text = string.format("当前速度:%d", h.WalkSpeed)
         else
-            statusLabel.Text = "请输入有效的速度数值"
+            status.Text = "未检测到人物Humanoid"
         end
-    else
-        statusLabel.Text = "未检测到人物Humanoid"
     end
-end)
-
-local function updateStatus()
-    local humanoid = getHumanoid()
-    if humanoid then
-        statusLabel.Text = string.format("当前速度:%d", humanoid.WalkSpeed)
-    else
-        statusLabel.Text = "未检测到人物Humanoid"
-    end
-end
-updateStatus()
-player.CharacterAdded:Connect(function()
-    wait(1)
     updateStatus()
-end)
+    p.CharacterAdded:Connect(function() wait(1) updateStatus() end)
 
--------------------------
--- 踏空行走功能（空气墙，持续跟随脚下，优化卡顿和失效）
--------------------------
-local stepWalkEnabled = false
-local stepWalkBtn = Instance.new("TextButton")
-stepWalkBtn.Size = UDim2.new(0, 120, 0, 36)
-stepWalkBtn.Position = UDim2.new(0, 20, 0, 150)
-stepWalkBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
-stepWalkBtn.Text = "踏空行走：关闭"
-stepWalkBtn.Font = Enum.Font.SourceSansBold
-stepWalkBtn.TextSize = 20
-stepWalkBtn.TextColor3 = Color3.fromRGB(255,255,255)
-stepWalkBtn.Parent = frame
-local stepWalkBtnCorner = Instance.new("UICorner")
-stepWalkBtnCorner.CornerRadius = UDim.new(1,0)
-stepWalkBtnCorner.Parent = stepWalkBtn
-
--- 优化的空气墙实现
-local stepPart = nil
-local stepConn = nil
-
-local function createStepPart()
-    if stepPart and stepPart.Parent then
+    -- 踏空行走
+    local stepWalkEnabled = false
+    local stepWalkBtn = Instance.new("TextButton", f)
+    stepWalkBtn.Size = UDim2.new(0, 120, 0, 36)
+    stepWalkBtn.Position = UDim2.new(0, 20, 0, 150)
+    stepWalkBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
+    stepWalkBtn.Text = "踏空行走：关闭"
+    stepWalkBtn.Font = Enum.Font.SourceSansBold
+    stepWalkBtn.TextSize = 20
+    stepWalkBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", stepWalkBtn).CornerRadius = UDim.new(1, 0)
+    local stepPart = nil
+    local stepConn = nil
+    local function createStepPart()
+        if stepPart and stepPart.Parent then return stepPart end
+        stepPart = Instance.new("Part")
+        stepPart.Anchored = true
+        stepPart.Size = Vector3.new(5, 1, 5)
+        stepPart.Transparency = 1
+        stepPart.CanCollide = true
+        stepPart.Name = "StepAir"
+        stepPart.TopSurface = Enum.SurfaceType.Smooth
+        stepPart.BottomSurface = Enum.SurfaceType.Smooth
+        stepPart.Parent = workspace
         return stepPart
     end
-    stepPart = Instance.new("Part")
-    stepPart.Anchored = true
-    stepPart.Size = Vector3.new(5, 1, 5)
-    stepPart.Transparency = 1
-    stepPart.CanCollide = true
-    stepPart.Name = "StepAir"
-    stepPart.TopSurface = Enum.SurfaceType.Smooth
-    stepPart.BottomSurface = Enum.SurfaceType.Smooth
-    stepPart.Parent = workspace
-    return stepPart
-end
-
-local function removeStepPart()
-    if stepPart then
-        stepPart:Destroy()
-        stepPart = nil
+    local function removeStepPart()
+        if stepPart then stepPart:Destroy() stepPart = nil end
     end
-end
-
-local function enableStepWalk(enable)
-    stepWalkEnabled = enable
-    if enable then
-        stepWalkBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
-        stepWalkBtn.Text = "踏空行走：开启"
-        createStepPart()
-        stepConn = game:GetService("RunService").RenderStepped:Connect(function()
-            local char = player.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local hrp = char.HumanoidRootPart
-                -- 跟随脚下，稍微低一点防止卡住角色
-                stepPart.Position = Vector3.new(hrp.Position.X, hrp.Position.Y - 3.1, hrp.Position.Z)
-            else
-                removeStepPart()
-            end
-        end)
-    else
-        stepWalkBtn.BackgroundColor3 = Color3.fromRGB(170,0,0)
-        stepWalkBtn.Text = "踏空行走：关闭"
-        if stepConn then stepConn:Disconnect() stepConn = nil end
-        removeStepPart()
+    local function enableStepWalk(enable)
+        stepWalkEnabled = enable
+        if enable then
+            stepWalkBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
+            stepWalkBtn.Text = "踏空行走：开启"
+            createStepPart()
+            stepConn = game:GetService("RunService").RenderStepped:Connect(function()
+                local char = p.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local hrp = char.HumanoidRootPart
+                    stepPart.Position = Vector3.new(hrp.Position.X, hrp.Position.Y - 3.1, hrp.Position.Z)
+                else
+                    removeStepPart()
+                end
+            end)
+        else
+            stepWalkBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+            stepWalkBtn.Text = "踏空行走：关闭"
+            if stepConn then stepConn:Disconnect() stepConn = nil end
+            removeStepPart()
+        end
     end
-end
+    stepWalkBtn.MouseButton1Click:Connect(function() enableStepWalk(not stepWalkEnabled) end)
+    p.CharacterAdded:Connect(function() wait(1) enableStepWalk(false) end)
 
-stepWalkBtn.MouseButton1Click:Connect(function()
-    enableStepWalk(not stepWalkEnabled)
-end)
-
--- 角色重生自动关闭
-player.CharacterAdded:Connect(function()
-    wait(1)
-    enableStepWalk(false)
-end)
-
--------------------------
--- 穿墙功能（Noclip）
--------------------------
-local noclipEnabled = false
-local noclipBtn = Instance.new("TextButton")
-noclipBtn.Size = UDim2.new(0, 120, 0, 36)
-noclipBtn.Position = UDim2.new(0, 160, 0, 150)
-noclipBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
-noclipBtn.Text = "穿墙：关闭"
-noclipBtn.Font = Enum.Font.SourceSansBold
-noclipBtn.TextSize = 20
-noclipBtn.TextColor3 = Color3.fromRGB(255,255,255)
-noclipBtn.Parent = frame
-local noclipBtnCorner = Instance.new("UICorner")
-noclipBtnCorner.CornerRadius = UDim.new(1,0)
-noclipBtnCorner.Parent = noclipBtn
-
-local noclipConn = nil
-local function enableNoclip(enable)
-    noclipEnabled = enable
-    if enable then
-        noclipBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
-        noclipBtn.Text = "穿墙：开启"
-        noclipConn = game:GetService("RunService").Stepped:Connect(function()
-            if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-                for _,v in pairs(player.Character:GetDescendants()) do
-                    if v:IsA("BasePart") and v.CanCollide == true then
-                        v.CanCollide = false
+    -- 穿墙
+    local noclipEnabled = false
+    local noclipBtn = Instance.new("TextButton", f)
+    noclipBtn.Size = UDim2.new(0, 120, 0, 36)
+    noclipBtn.Position = UDim2.new(0, 160, 0, 150)
+    noclipBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
+    noclipBtn.Text = "穿墙：关闭"
+    noclipBtn.Font = Enum.Font.SourceSansBold
+    noclipBtn.TextSize = 20
+    noclipBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", noclipBtn).CornerRadius = UDim.new(1, 0)
+    local noclipConn = nil
+    local function enableNoclip(enable)
+        noclipEnabled = enable
+        if enable then
+            noclipBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
+            noclipBtn.Text = "穿墙：开启"
+            noclipConn = game:GetService("RunService").Stepped:Connect(function()
+                if p.Character and p.Character:FindFirstChildOfClass("Humanoid") then
+                    for _, v in pairs(p.Character:GetDescendants()) do
+                        if v:IsA("BasePart") and v.CanCollide == true then v.CanCollide = false end
                     end
                 end
-            end
-        end)
-    else
-        noclipBtn.BackgroundColor3 = Color3.fromRGB(170,0,0)
-        noclipBtn.Text = "穿墙：关闭"
-        if noclipConn then noclipConn:Disconnect() noclipConn = nil end
-        -- 重置CanCollide
-        if player.Character then
-            for _,v in pairs(player.Character:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    v.CanCollide = true
+            end)
+        else
+            noclipBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+            noclipBtn.Text = "穿墙：关闭"
+            if noclipConn then noclipConn:Disconnect() noclipConn = nil end
+            if p.Character then
+                for _, v in pairs(p.Character:GetDescendants()) do
+                    if v:IsA("BasePart") then v.CanCollide = true end
                 end
             end
         end
     end
+    noclipBtn.MouseButton1Click:Connect(function() enableNoclip(not noclipEnabled) end)
+    p.CharacterAdded:Connect(function() wait(1) enableNoclip(false) end)
+
+    -- 无限体力
+    local staminaEnabled = false
+    local staminaBtn = Instance.new("TextButton", f)
+    staminaBtn.Size = UDim2.new(0, 120, 0, 36)
+    staminaBtn.Position = UDim2.new(0, 20, 0, 200)
+    staminaBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
+    staminaBtn.Text = "无限体力：关闭"
+    staminaBtn.Font = Enum.Font.SourceSansBold
+    staminaBtn.TextSize = 20
+    staminaBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    Instance.new("UICorner", staminaBtn).CornerRadius = UDim.new(1,0)
+    local staminaConn = nil
+    local function enableStamina(enable)
+        staminaEnabled = enable
+        if enable then
+            staminaBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
+            staminaBtn.Text = "无限体力：开启"
+            staminaConn = game:GetService("RunService").RenderStepped:Connect(function()
+                local char = p.Character
+                if char then
+                    -- Roblox被遗弃体力机制
+                    local ps = p:FindFirstChild("PlayerScripts")
+                    if ps then
+                        for _,scr in ipairs(ps:GetChildren()) do
+                            if scr:IsA("LocalScript") and scr.Name:lower():find("sprint") then
+                                local env = getfenv and getfenv(scr) or nil
+                                if env and env.Stamina then
+                                    env.Stamina.Value = env.MaxStamina and env.MaxStamina.Value or 100
+                                end
+                            end
+                        end
+                    end
+                    if char:FindFirstChild("Stamina") then
+                        local st = char.Stamina
+                        if st:IsA("NumberValue") then st.Value = st.MaxValue or 100 end
+                    end
+                end
+            end)
+        else
+            staminaBtn.BackgroundColor3 = Color3.fromRGB(170,0,0)
+            staminaBtn.Text = "无限体力：关闭"
+            if staminaConn then staminaConn:Disconnect() staminaConn = nil end
+        end
+    end
+    staminaBtn.MouseButton1Click:Connect(function() enableStamina(not staminaEnabled) end)
+    p.CharacterAdded:Connect(function() wait(1) enableStamina(false) end)
+
+    -- 无限跳
+    local infjumpEnabled = false
+    local infjumpBtn = Instance.new("TextButton", f)
+    infjumpBtn.Size = UDim2.new(0, 120, 0, 36)
+    infjumpBtn.Position = UDim2.new(0, 160, 0, 200)
+    infjumpBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
+    infjumpBtn.Text = "无限跳：关闭"
+    infjumpBtn.Font = Enum.Font.SourceSansBold
+    infjumpBtn.TextSize = 20
+    infjumpBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    Instance.new("UICorner", infjumpBtn).CornerRadius = UDim.new(1,0)
+    local infjumpConn = nil
+    local function enableInfJump(enable)
+        infjumpEnabled = enable
+        if enable then
+            infjumpBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
+            infjumpBtn.Text = "无限跳：开启"
+            infjumpConn = UIS.JumpRequest:Connect(function()
+                local h = getHumanoid()
+                if h then
+                    h:ChangeState(Enum.HumanoidStateType.Jumping)
+                end
+            end)
+        else
+            infjumpBtn.BackgroundColor3 = Color3.fromRGB(170,0,0)
+            infjumpBtn.Text = "无限跳：关闭"
+            if infjumpConn then infjumpConn:Disconnect() infjumpConn = nil end
+        end
+    end
+    infjumpBtn.MouseButton1Click:Connect(function() enableInfJump(not infjumpEnabled) end)
+    p.CharacterAdded:Connect(function() wait(1) enableInfJump(false) end)
+
+    -- 最小化
+    local isMin = false
+    local minSize = UDim2.new(0, 200, 0, 50)
+    local origSize = f.Size
+    local function setMinimized(min)
+        isMin = min
+        if min then
+            for _, v in ipairs(f:GetChildren()) do
+                if v~=l and v~=cb and v~=minBtn then
+                    v.Visible = false
+                end
+            end
+            f.Size = minSize
+            l.Text = "人物功能调节 (已最小化)"
+        else
+            for _, v in ipairs(f:GetChildren()) do
+                v.Visible = true
+            end
+            f.Size = origSize
+            l.Text = "人物功能调节"
+        end
+    end
+    minBtn.MouseButton1Click:Connect(function()
+        setMinimized(not isMin)
+    end)
+
+    -- 提示文本
+    local tip = Instance.new("TextLabel", f)
+    tip.Size = UDim2.new(1, -20, 0, 20)
+    tip.Position = UDim2.new(0, 10, 1, -24)
+    tip.BackgroundTransparency = 1
+    tip.Text = "功能：踏空行走=空气墙，穿墙=Noclip，无限体力适用于被遗弃，无限跳=多段跳"
+    tip.Font = Enum.Font.SourceSans
+    tip.TextSize = 16
+    tip.TextColor3 = Color3.fromRGB(200,200,200)
+    tip.TextXAlignment = Enum.TextXAlignment.Left
 end
 
-noclipBtn.MouseButton1Click:Connect(function()
-    enableNoclip(not noclipEnabled)
+loginBtn.MouseButton1Click:Connect(function()
+    if loginBox.Text == "1" then
+        showMainUI()
+    else
+        loginTip.Text = "输入错误，请输入1"
+    end
 end)
+    local f = Instance.new("Frame", gui)
+    f.Size = UDim2.new(0, 350, 0, 300)
+    f.AnchorPoint = Vector2.new(0.5, 0.5)
+    f.Position = UDim2.new(0.5, 0, 0.5, 0)
+    f.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    f.BorderSizePixel = 0
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 16)
 
-player.CharacterAdded:Connect(function()
-    wait(1)
-    enableNoclip(false)
-end)
+    -- 标题
+    local l = Instance.new("TextLabel", f)
+    l.Size = UDim2.new(1, 0, 0, 40)
+    l.BackgroundTransparency = 1
+    l.Text = "人物功能调节"
+    l.Font = Enum.Font.SourceSansBold
+    l.TextSize = 26
+    l.TextColor3 = Color3.fromRGB(255, 255, 255)
+    l.Name = "TitleLabel"
 
--- 提示文本
-local tip = Instance.new("TextLabel")
-tip.Size = UDim2.new(1, -20, 0, 20)
-tip.Position = UDim2.new(0, 10, 1, -24)
-tip.BackgroundTransparency = 1
-tip.Text = "功能：踏空行走=空气墙，穿墙=Noclip"
-tip.Font = Enum.Font.SourceSans
-tip.TextSize = 16
-tip.TextColor3 = Color3.fromRGB(200,200,200)
-tip.TextXAlignment = Enum.TextXAlignment.Left
-tip.Parent = frame
+    -- 关闭按钮
+    local cb = Instance.new("TextButton", f)
+    cb.Size = UDim2.new(0, 40, 0, 40)
+    cb.Position = UDim2.new(1, -45, 0, 5)
+    cb.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+    cb.Text = "X"
+    cb.Font = Enum.Font.SourceSansBold
+    cb.TextSize = 22
+    cb.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", cb).CornerRadius = UDim.new(1, 0)
+    cb.MouseButton1Click:Connect(function() gui:Destroy() end)
+
+    -- 最小化按钮
+    local minBtn = Instance.new("TextButton", f)
+    minBtn.Size = UDim2.new(0, 40, 0, 40)
+    minBtn.Position = UDim2.new(1, -90, 0, 5)
+    minBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    minBtn.Text = "-"
+    minBtn.Font = Enum.Font.SourceSansBold
+    minBtn.TextSize = 28
+    minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", minBtn).CornerRadius = UDim.new(1, 0)
+
+    -- 拖动
+    local dragging, mousePos, framePos = false, nil, nil
+    f.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true mousePos = i.Position framePos = f.Position
+            i.Changed:Connect(function()
+                if i.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    f.InputChanged:Connect(function(i)
+        if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+            local d = i.Position - mousePos
+            f.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + d.X, framePos.Y.Scale, framePos.Y.Offset + d.Y)
+        end
+    end)
+    UIS.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+
+    local p = game.Players.LocalPlayer
+    local function getHumanoid()
+        local c = p.Character or p.CharacterAdded:Wait()
+        return c:FindFirstChildOfClass("Humanoid")
+    end
+
+    -- 速度
+    local sl = Instance.new("TextLabel", f)
+    sl.Size = UDim2.new(0, 110, 0, 30)
+    sl.Position = UDim2.new(0, 20, 0, 60)
+    sl.BackgroundTransparency = 1
+    sl.Text = "人物速度:"
+    sl.Font = Enum.Font.SourceSans
+    sl.TextSize = 20
+    sl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sl.TextXAlignment = Enum.TextXAlignment.Left
+
+    local sb = Instance.new("TextBox", f)
+    sb.Size = UDim2.new(0, 70, 0, 30)
+    sb.Position = UDim2.new(0, 130, 0, 60)
+    sb.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    sb.Text = ""
+    sb.PlaceholderText = "默认16"
+    sb.Font = Enum.Font.SourceSans
+    sb.TextSize = 18
+    sb.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sb.ClearTextOnFocus = false
+    Instance.new("UICorner", sb).CornerRadius = UDim.new(1, 0)
+
+    local sbtn = Instance.new("TextButton", f)
+    sbtn.Size = UDim2.new(0, 60, 0, 30)
+    sbtn.Position = UDim2.new(0, 210, 0, 60)
+    sbtn.BackgroundColor3 = Color3.fromRGB(50, 120, 255)
+    sbtn.Text = "设置"
+    sbtn.Font = Enum.Font.SourceSans
+    sbtn.TextSize = 18
+    sbtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", sbtn).CornerRadius = UDim.new(1, 0)
+
+    local status = Instance.new("TextLabel", f)
+    status.Size = UDim2.new(1, -40, 0, 30)
+    status.Position = UDim2.new(0, 20, 0, 110)
+    status.BackgroundTransparency = 1
+    status.Text = ""
+    status.Font = Enum.Font.SourceSans
+    status.TextSize = 18
+    status.TextColor3 = Color3.fromRGB(160, 255, 160)
+    status.TextXAlignment = Enum.TextXAlignment.Left
+
+    sbtn.MouseButton1Click:Connect(function()
+        local h = getHumanoid()
+        if h then
+            local v = tonumber(sb.Text)
+            if v and v > 0 then
+                h.WalkSpeed = v
+                status.Text = "人物速度已设置为：" .. v
+            else
+                status.Text = "请输入有效的速度数值"
+            end
+        else
+            status.Text = "未检测到人物Humanoid"
+        end
+    end)
+    local function updateStatus()
+        local h = getHumanoid()
+        if h then
+            status.Text = string.format("当前速度:%d", h.WalkSpeed)
+        else
+            status.Text = "未检测到人物Humanoid"
+        end
+    end
+    updateStatus()
+    p.CharacterAdded:Connect(function() wait(1) updateStatus() end)
+
+    -- 踏空行走
+    local stepWalkEnabled = false
+    local stepWalkBtn = Instance.new("TextButton", f)
+    stepWalkBtn.Size = UDim2.new(0, 120, 0, 36)
+    stepWalkBtn.Position = UDim2.new(0, 20, 0, 150)
+    stepWalkBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
+    stepWalkBtn.Text = "踏空行走：关闭"
+    stepWalkBtn.Font = Enum.Font.SourceSansBold
+    stepWalkBtn.TextSize = 20
+    stepWalkBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", stepWalkBtn).CornerRadius = UDim.new(1, 0)
+    local stepPart = nil
+    local stepConn = nil
+    local function createStepPart()
+        if stepPart and stepPart.Parent then return stepPart end
+        stepPart = Instance.new("Part")
+        stepPart.Anchored = true
+        stepPart.Size = Vector3.new(5, 1, 5)
+        stepPart.Transparency = 1
+        stepPart.CanCollide = true
+        stepPart.Name = "StepAir"
+        stepPart.TopSurface = Enum.SurfaceType.Smooth
+        stepPart.BottomSurface = Enum.SurfaceType.Smooth
+        stepPart.Parent = workspace
+        return stepPart
+    end
+    local function removeStepPart()
+        if stepPart then stepPart:Destroy() stepPart = nil end
+    end
+    local function enableStepWalk(enable)
+        stepWalkEnabled = enable
+        if enable then
+            stepWalkBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
+            stepWalkBtn.Text = "踏空行走：开启"
+            createStepPart()
+            stepConn = game:GetService("RunService").RenderStepped:Connect(function()
+                local char = p.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local hrp = char.HumanoidRootPart
+                    stepPart.Position = Vector3.new(hrp.Position.X, hrp.Position.Y - 3.1, hrp.Position.Z)
+                else
+                    removeStepPart()
+                end
+            end)
+        else
+            stepWalkBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+            stepWalkBtn.Text = "踏空行走：关闭"
+            if stepConn then stepConn:Disconnect() stepConn = nil end
+            removeStepPart()
+        end
+    end
+    stepWalkBtn.MouseButton1Click:Connect(function() enableStepWalk(not stepWalkEnabled) end)
+    p.CharacterAdded:Connect(function() wait(1) enableStepWalk(false) end)
+
+    -- 穿墙
+    local noclipEnabled = false
+    local noclipBtn = Instance.new("TextButton", f)
+    noclipBtn.Size = UDim2.new(0, 120, 0, 36)
+    noclipBtn.Position = UDim2.new(0, 160, 0, 150)
+    noclipBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
+    noclipBtn.Text = "穿墙：关闭"
+    noclipBtn.Font = Enum.Font.SourceSansBold
+    noclipBtn.TextSize = 20
+    noclipBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", noclipBtn).CornerRadius = UDim.new(1, 0)
+    local noclipConn = nil
+    local function enableNoclip(enable)
+        noclipEnabled = enable
+        if enable then
+            noclipBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
+            noclipBtn.Text = "穿墙：开启"
+            noclipConn = game:GetService("RunService").Stepped:Connect(function()
+                if p.Character and p.Character:FindFirstChildOfClass("Humanoid") then
+                    for _, v in pairs(p.Character:GetDescendants()) do
+                        if v:IsA("BasePart") and v.CanCollide == true then v.CanCollide = false end
+                    end
+                end
+            end)
+        else
+            noclipBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+            noclipBtn.Text = "穿墙：关闭"
+            if noclipConn then noclipConn:Disconnect() noclipConn = nil end
+            if p.Character then
+                for _, v in pairs(p.Character:GetDescendants()) do
+                    if v:IsA("BasePart") then v.CanCollide = true end
+                end
+            end
+        end
+    end
+    noclipBtn.MouseButton1Click:Connect(function() enableNoclip(not noclipEnabled) end)
+    p.CharacterAdded:Connect(function() wait(1) enableNoclip(false) end)
+
+    -- 无限体力
+    local staminaEnabled = false
+    local staminaBtn = Instance.new("TextButton", f)
+    staminaBtn.Size = UDim2.new(0, 120, 0, 36)
+    staminaBtn.Position = UDim2.new(0, 20, 0, 200)
+    staminaBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
+    staminaBtn.Text = "无限体力：关闭"
+    staminaBtn.Font = Enum.Font.SourceSansBold
+    staminaBtn.TextSize = 20
+    staminaBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    Instance.new("UICorner", staminaBtn).CornerRadius = UDim.new(1,0)
+    local staminaConn = nil
+    local function enableStamina(enable)
+        staminaEnabled = enable
+        if enable then
+            staminaBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
+            staminaBtn.Text = "无限体力：开启"
+            staminaConn = game:GetService("RunService").RenderStepped:Connect(function()
+                local char = p.Character
+                if char then
+                    -- Roblox被遗弃体力机制
+                    local ps = p:FindFirstChild("PlayerScripts")
+                    if ps then
+                        for _,scr in ipairs(ps:GetChildren()) do
+                            if scr:IsA("LocalScript") and scr.Name:lower():find("sprint") then
+                                local env = getfenv and getfenv(scr) or nil
+                                if env and env.Stamina then
+                                    env.Stamina.Value = env.MaxStamina and env.MaxStamina.Value or 100
+                                end
+                            end
+                        end
+                    end
+                    if char:FindFirstChild("Stamina") then
+                        local st = char.Stamina
+                        if st:IsA("NumberValue") then st.Value = st.MaxValue or 100 end
+                    end
+                end
+            end)
+        else
+            staminaBtn.BackgroundColor3 = Color3.fromRGB(170,0,0)
+            staminaBtn.Text = "无限体力：关闭"
+            if staminaConn then staminaConn:Disconnect() staminaConn = nil end
+        end
+    end
+    staminaBtn.MouseButton1Click:Connect(function() enableStamina(not staminaEnabled) end)
+    p.CharacterAdded:Connect(function() wait(1) enableStamina(false) end)
+
+    -- 无限跳
+    local infjumpEnabled = false
+    local infjumpBtn = Instance.new("TextButton", f)
+    infjumpBtn.Size = UDim2.new(0, 120, 0, 36)
+    infjumpBtn.Position = UDim2.new(0, 160, 0, 200)
+    infjumpBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
+    infjumpBtn.Text = "无限跳：关闭"
+    infjumpBtn.Font = Enum.Font.SourceSansBold
+    infjumpBtn.TextSize = 20
+    infjumpBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    Instance.new("UICorner", infjumpBtn).CornerRadius = UDim.new(1,0)
+    local infjumpConn = nil
+    local function enableInfJump(enable)
+        infjumpEnabled = enable
+        if enable then
+            infjumpBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
+            infjumpBtn.Text = "无限跳：开启"
+            infjumpConn = UIS.JumpRequest:Connect(function()
+                local h = getHumanoid()
+                if h then
+                    h:ChangeState(Enum.HumanoidStateType.Jumping)
+                end
+            end)
+        else
+            infjumpBtn.BackgroundColor3 = Color3.fromRGB(170,0,0)
+            infjumpBtn.Text = "无限跳：关闭"
+            if infjumpConn then infjumpConn:Disconnect() infjumpConn = nil end
+        end
+    end
+    infjumpBtn.MouseButton1Click:Connect(function() enableInfJump(not infjumpEnabled) end)
+    p.CharacterAdded:Connect(function() wait(1) enableInfJump(false) end)
+
+    -- 最小化
+    local isMin = false
+    local minSize = UDim2.new(0, 200, 0, 50)
+    local origSize = f.Size
+    local function setMinimized(min)
+        isMin = min
+        if min then
+            for _, v in ipairs(f:GetChildren()) do
+                if v~=l and v~=cb and v~=minBtn then
+                    v.Visible = false
+                end
+            end
+            f.Size = minSize
+            l.Text = "人物功能调节 (已最小化)"
+        else
+            for _, v in ipairs(f:GetChildren()) do
+                v.Visible = true
+            end
+            f.Size = origSize
+            l.Text = "人物功能调节"
+        end
+    end
+    minBtn.MouseButton1Click:Connect(function()
+        setMinimized(not isMin)
+    end)
+
+    -- 提示文本
+    local tip = Instance.new("TextLabel", f)
+    tip.Size = UDim2.new(1, -20, 0, 20)
+    tip.Position = UDim2.new(0, 10, 1, -24)
+    tip.BackgroundTransparency = 1
+    tip.Text = "功能：踏空行走=空气墙，穿墙=Noclip，无限体力适用于被遗弃，无限跳=多段跳"
+    tip.Font = Enum.Font.SourceSans
+    tip.TextSize = 16
+    tip.TextColor3 = Color3.fromRGB(200,200,200)
+    tip.TextXAlignment = Enum.TextXAlignment.Left
+end
+
+loginBtn.MouseButton1Click:Connect(function()
+    if loginBox.Text == "1" then
+        showMainUI()
+    else
+        loginTip.Text = "输入错误，请输入1"
+    end
+end)-- Roblox：启动弹出登录界面，输入“1”且点击确定后才进入主界面（含速度/踏空/穿墙/无限体力/无限跳/最小化）
+if game.CoreGui:FindFirstChild("MyCustomUI") then game.CoreGui.MyCustomUI:Destroy() end
+
+local UIS = game:GetService("UserInputService")
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "MyCustomUI"
+gui.ResetOnSpawn = false
+
+-- 登录界面
+local loginFrame = Instance.new("Frame", gui)
+loginFrame.Size = UDim2.new(0, 280, 0, 150)
+loginFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+loginFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+loginFrame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+loginFrame.BorderSizePixel = 0
+Instance.new("UICorner", loginFrame).CornerRadius = UDim.new(0, 14)
+local loginTitle = Instance.new("TextLabel", loginFrame)
+loginTitle.Size = UDim2.new(1, 0, 0, 40)
+loginTitle.Position = UDim2.new(0,0,0,0)
+loginTitle.BackgroundTransparency = 1
+loginTitle.Text = "请输入1"
+loginTitle.Font = Enum.Font.SourceSansBold
+loginTitle.TextSize = 26
+loginTitle.TextColor3 = Color3.fromRGB(255,255,255)
+local loginBox = Instance.new("TextBox", loginFrame)
+loginBox.Size = UDim2.new(0.7, 0, 0, 36)
+loginBox.Position = UDim2.new(0.15, 0, 0, 60)
+loginBox.BackgroundColor3 = Color3.fromRGB(60,60,60)
+loginBox.Font = Enum.Font.SourceSans
+loginBox.PlaceholderText = "输入1进入"
+loginBox.Text = ""
+loginBox.TextSize = 20
+loginBox.TextColor3 = Color3.fromRGB(255,255,255)
+loginBox.ClearTextOnFocus = false
+Instance.new("UICorner", loginBox).CornerRadius = UDim.new(1,0)
+local loginBtn = Instance.new("TextButton", loginFrame)
+loginBtn.Size = UDim2.new(0.5, 0, 0, 36)
+loginBtn.Position = UDim2.new(0.25,0,0, 110)
+loginBtn.BackgroundColor3 = Color3.fromRGB(50, 120, 255)
+loginBtn.Text = "确定"
+loginBtn.Font = Enum.Font.SourceSansBold
+loginBtn.TextSize = 20
+loginBtn.TextColor3 = Color3.fromRGB(255,255,255)
+Instance.new("UICorner",loginBtn).CornerRadius = UDim.new(1,0)
+local loginTip = Instance.new("TextLabel", loginFrame)
+loginTip.Size = UDim2.new(1,0,0,24)
+loginTip.Position = UDim2.new(0,0,1,-22)
+loginTip.BackgroundTransparency = 1
+loginTip.Text = ""
+loginTip.Font = Enum.Font.SourceSans
+loginTip.TextSize = 16
+loginTip.TextColor3 = Color3.fromRGB(240,80,80)
+
+-- 主界面函数
+local function showMainUI()
+    loginFrame.Visible = false
+
+    local f = Instance.new("Frame", gui)
+    f.Size = UDim2.new(0, 350, 0, 300)
+    f.AnchorPoint = Vector2.new(0.5, 0.5)
+    f.Position = UDim2.new(0.5, 0, 0.5, 0)
+    f.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    f.BorderSizePixel = 0
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 16)
+
+    -- 标题
+    local l = Instance.new("TextLabel", f)
+    l.Size = UDim2.new(1, 0, 0, 40)
+    l.BackgroundTransparency = 1
+    l.Text = "人物功能调节"
+    l.Font = Enum.Font.SourceSansBold
+    l.TextSize = 26
+    l.TextColor3 = Color3.fromRGB(255, 255, 255)
+    l.Name = "TitleLabel"
+
+    -- 关闭按钮
+    local cb = Instance.new("TextButton", f)
+    cb.Size = UDim2.new(0, 40, 0, 40)
+    cb.Position = UDim2.new(1, -45, 0, 5)
+    cb.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+    cb.Text = "X"
+    cb.Font = Enum.Font.SourceSansBold
+    cb.TextSize = 22
+    cb.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", cb).CornerRadius = UDim.new(1, 0)
+    cb.MouseButton1Click:Connect(function() gui:Destroy() end)
+
+    -- 最小化按钮
+    local minBtn = Instance.new("TextButton", f)
+    minBtn.Size = UDim2.new(0, 40, 0, 40)
+    minBtn.Position = UDim2.new(1, -90, 0, 5)
+    minBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    minBtn.Text = "-"
+    minBtn.Font = Enum.Font.SourceSansBold
+    minBtn.TextSize = 28
+    minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", minBtn).CornerRadius = UDim.new(1, 0)
+
+    -- 拖动
+    local dragging, mousePos, framePos = false, nil, nil
+    f.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true mousePos = i.Position framePos = f.Position
+            i.Changed:Connect(function()
+                if i.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    f.InputChanged:Connect(function(i)
+        if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+            local d = i.Position - mousePos
+            f.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + d.X, framePos.Y.Scale, framePos.Y.Offset + d.Y)
+        end
+    end)
+    UIS.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+
+    local p = game.Players.LocalPlayer
+    local function getHumanoid()
+        local c = p.Character or p.CharacterAdded:Wait()
+        return c:FindFirstChildOfClass("Humanoid")
+    end
+
+    -- 速度
+    local sl = Instance.new("TextLabel", f)
+    sl.Size = UDim2.new(0, 110, 0, 30)
+    sl.Position = UDim2.new(0, 20, 0, 60)
+    sl.BackgroundTransparency = 1
+    sl.Text = "人物速度:"
+    sl.Font = Enum.Font.SourceSans
+    sl.TextSize = 20
+    sl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sl.TextXAlignment = Enum.TextXAlignment.Left
+
+    local sb = Instance.new("TextBox", f)
+    sb.Size = UDim2.new(0, 70, 0, 30)
+    sb.Position = UDim2.new(0, 130, 0, 60)
+    sb.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    sb.Text = ""
+    sb.PlaceholderText = "默认16"
+    sb.Font = Enum.Font.SourceSans
+    sb.TextSize = 18
+    sb.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sb.ClearTextOnFocus = false
+    Instance.new("UICorner", sb).CornerRadius = UDim.new(1, 0)
+
+    local sbtn = Instance.new("TextButton", f)
+    sbtn.Size = UDim2.new(0, 60, 0, 30)
+    sbtn.Position = UDim2.new(0, 210, 0, 60)
+    sbtn.BackgroundColor3 = Color3.fromRGB(50, 120, 255)
+    sbtn.Text = "设置"
+    sbtn.Font = Enum.Font.SourceSans
+    sbtn.TextSize = 18
+    sbtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", sbtn).CornerRadius = UDim.new(1, 0)
+
+    local status = Instance.new("TextLabel", f)
+    status.Size = UDim2.new(1, -40, 0, 30)
+    status.Position = UDim2.new(0, 20, 0, 110)
+    status.BackgroundTransparency = 1
+    status.Text = ""
+    status.Font = Enum.Font.SourceSans
+    status.TextSize = 18
+    status.TextColor3 = Color3.fromRGB(160, 255, 160)
+    status.TextXAlignment = Enum.TextXAlignment.Left
+
+    sbtn.MouseButton1Click:Connect(function()
+        local h = getHumanoid()
+        if h then
+            local v = tonumber(sb.Text)
+            if v and v > 0 then
+                h.WalkSpeed = v
+                status.Text = "人物速度已设置为：" .. v
+            else
+                status.Text = "请输入有效的速度数值"
+            end
+        else
+            status.Text = "未检测到人物Humanoid"
+        end
+    end)
+    local function updateStatus()
+        local h = getHumanoid()
+        if h then
+            status.Text = string.format("当前速度:%d", h.WalkSpeed)
+        else
+            status.Text = "未检测到人物Humanoid"
+        end
+    end
+    updateStatus()
+    p.CharacterAdded:Connect(function() wait(1) updateStatus() end)
+
+    -- 踏空行走
+    local stepWalkEnabled = false
+    local stepWalkBtn = Instance.new("TextButton", f)
+    stepWalkBtn.Size = UDim2.new(0, 120, 0, 36)
+    stepWalkBtn.Position = UDim2.new(0, 20, 0, 150)
+    stepWalkBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
+    stepWalkBtn.Text = "踏空行走：关闭"
+    stepWalkBtn.Font = Enum.Font.SourceSansBold
+    stepWalkBtn.TextSize = 20
+    stepWalkBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", stepWalkBtn).CornerRadius = UDim.new(1, 0)
+    local stepPart = nil
+    local stepConn = nil
+    local function createStepPart()
+        if stepPart and stepPart.Parent then return stepPart end
+        stepPart = Instance.new("Part")
+        stepPart.Anchored = true
+        stepPart.Size = Vector3.new(5, 1, 5)
+        stepPart.Transparency = 1
+        stepPart.CanCollide = true
+        stepPart.Name = "StepAir"
+        stepPart.TopSurface = Enum.SurfaceType.Smooth
+        stepPart.BottomSurface = Enum.SurfaceType.Smooth
+        stepPart.Parent = workspace
+        return stepPart
+    end
+    local function removeStepPart()
+        if stepPart then stepPart:Destroy() stepPart = nil end
+    end
+    local function enableStepWalk(enable)
+        stepWalkEnabled = enable
+        if enable then
+            stepWalkBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
+            stepWalkBtn.Text = "踏空行走：开启"
+            createStepPart()
+            stepConn = game:GetService("RunService").RenderStepped:Connect(function()
+                local char = p.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local hrp = char.HumanoidRootPart
+                    stepPart.Position = Vector3.new(hrp.Position.X, hrp.Position.Y - 3.1, hrp.Position.Z)
+                else
+                    removeStepPart()
+                end
+            end)
+        else
+            stepWalkBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+            stepWalkBtn.Text = "踏空行走：关闭"
+            if stepConn then stepConn:Disconnect() stepConn = nil end
+            removeStepPart()
+        end
+    end
+    stepWalkBtn.MouseButton1Click:Connect(function() enableStepWalk(not stepWalkEnabled) end)
+    p.CharacterAdded:Connect(function() wait(1) enableStepWalk(false) end)
+
+    -- 穿墙
+    local noclipEnabled = false
+    local noclipBtn = Instance.new("TextButton", f)
+    noclipBtn.Size = UDim2.new(0, 120, 0, 36)
+    noclipBtn.Position = UDim2.new(0, 160, 0, 150)
+    noclipBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
+    noclipBtn.Text = "穿墙：关闭"
+    noclipBtn.Font = Enum.Font.SourceSansBold
+    noclipBtn.TextSize = 20
+    noclipBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", noclipBtn).CornerRadius = UDim.new(1, 0)
+    local noclipConn = nil
+    local function enableNoclip(enable)
+        noclipEnabled = enable
+        if enable then
+            noclipBtn.BackgroundColor3 = Color3.fromRGB(70, 180, 70)
+            noclipBtn.Text = "穿墙：开启"
+            noclipConn = game:GetService("RunService").Stepped:Connect(function()
+                if p.Character and p.Character:FindFirstChildOfClass("Humanoid") then
+                    for _, v in pairs(p.Character:GetDescendants()) do
+                        if v:IsA("BasePart") and v.CanCollide == true then v.CanCollide = false end
+                    end
+                end
+            end)
+        else
+            noclipBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+            noclipBtn.Text = "穿墙：关闭"
+            if noclipConn then noclipConn:Disconnect() noclipConn = nil end
+            if p.Character then
+                for _, v in pairs(p.Character:GetDescendants()) do
+                    if v:IsA("BasePart") then v.CanCollide = true end
+                end
+            end
+        end
+    end
+    noclipBtn.MouseButton1Click:Connect(function() enableNoclip(not noclipEnabled) end)
+    p.CharacterAdded:Connect(function() wait(1) enableNoclip(false) end)
+
+    -- 无限体力
+    local staminaEnabled = false
+    local staminaBtn = Instance.new("TextButton", f)
+    staminaBtn.Size = UDim2.new(0, 120, 0, 36)
+    staminaBtn.Position = UDim2.new(0, 20, 0, 200)
+    staminaBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
+    staminaBtn.Text = "无限体力：关闭"
+    staminaBtn.Font = Enum.Font.SourceSansBold
+    staminaBtn.TextSize = 20
+    staminaBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    Instance.new("UICorner", staminaBtn).CornerRadius = UDim.new(1,0)
+    local staminaConn = nil
+    local function enableStamina(enable)
+        staminaEnabled = enable
+        if enable then
+            staminaBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
+            staminaBtn.Text = "无限体力：开启"
+            staminaConn = game:GetService("RunService").RenderStepped:Connect(function()
+                local char = p.Character
+                if char then
+                    -- Roblox被遗弃体力机制
+                    local ps = p:FindFirstChild("PlayerScripts")
+                    if ps then
+                        for _,scr in ipairs(ps:GetChildren()) do
+                            if scr:IsA("LocalScript") and scr.Name:lower():find("sprint") then
+                                local env = getfenv and getfenv(scr) or nil
+                                if env and env.Stamina then
+                                    env.Stamina.Value = env.MaxStamina and env.MaxStamina.Value or 100
+                                end
+                            end
+                        end
+                    end
+                    if char:FindFirstChild("Stamina") then
+                        local st = char.Stamina
+                        if st:IsA("NumberValue") then st.Value = st.MaxValue or 100 end
+                    end
+                end
+            end)
+        else
+            staminaBtn.BackgroundColor3 = Color3.fromRGB(170,0,0)
+            staminaBtn.Text = "无限体力：关闭"
+            if staminaConn then staminaConn:Disconnect() staminaConn = nil end
+        end
+    end
+    staminaBtn.MouseButton1Click:Connect(function() enableStamina(not staminaEnabled) end)
+    p.CharacterAdded:Connect(function() wait(1) enableStamina(false) end)
+
+    -- 无限跳
+    local infjumpEnabled = false
+    local infjumpBtn = Instance.new("TextButton", f)
+    infjumpBtn.Size = UDim2.new(0, 120, 0, 36)
+    infjumpBtn.Position = UDim2.new(0, 160, 0, 200)
+    infjumpBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
+    infjumpBtn.Text = "无限跳：关闭"
+    infjumpBtn.Font = Enum.Font.SourceSansBold
+    infjumpBtn.TextSize = 20
+    infjumpBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    Instance.new("UICorner", infjumpBtn).CornerRadius = UDim.new(1,0)
+    local infjumpConn = nil
+    local function enableInfJump(enable)
+        infjumpEnabled = enable
+        if enable then
+            infjumpBtn.BackgroundColor3 = Color3.fromRGB(70,180,70)
+            infjumpBtn.Text = "无限跳：开启"
+            infjumpConn = UIS.JumpRequest:Connect(function()
+                local h = getHumanoid()
+                if h then
+                    h:ChangeState(Enum.HumanoidStateType.Jumping)
+                end
+            end)
+        else
+            infjumpBtn.BackgroundColor3 = Color3.fromRGB(170,0,0)
+            infjumpBtn.Text = "无限跳：关闭"
+            if infjumpConn then infjumpConn:Disconnect() infjumpConn = nil end
+        end
+    end
+    infjumpBtn.MouseButton1Click:Connect(function() enableInfJump(not infjumpEnabled) end)
+    p.CharacterAdded:Connect(function() wait(1) enableInfJump(false) end)
+
+    -- 最小化
+    local isMin = false
+    local minSize = UDim2.new(0, 200, 0, 50)
+    local origSize = f.Size
+    local function setMinimized(min)
+        isMin = min
+        if min then
+            for _, v in ipairs(f:GetChildren()) do
+                if v~=l and v~=cb and v~=minBtn then
+                    v.Visible = false
+                end
+            end
+            f.Size = minSize
+            l.Text = "人物功能调节 (已最小化)"
+        else
+            for _, v in ipairs(f:GetChildren()) do
+                v.Visible = true
+            end
+            f.Size = origSize
+            l.Text = "人物功能调节"
+        end
+    end
+    minBtn.MouseButton1Click:Connect(function()
+        setMinimized(not isMin)
+    end)
+
+    -- 提示文本
+    local tip = Instance.new("TextLabel", f)
+    tip.Size = UDim2.new(1, -20, 0, 20)
+    tip.Position = UDim2.new(0, 10, 1, -24)
+    tip.BackgroundTransparency = 1
+    tip.Text = "功能：踏空行走=空气墙，穿墙=Noclip，无限体力适用于被遗弃，无限跳=多段跳"
+    tip.Font = Enum.Font.SourceSans
+    tip.TextSize = 16
+    tip.TextColor3 = Color3.fromRGB(200,200,200)
+    tip.TextXAlignment = Enum.TextXAlignment.Left
+end
+
+loginBtn.MouseButton1Click:Connect(function()
+    if loginBox.Text == "1" then
+        showMainUI()
+    else
+        loginTip.Text = "输入错误，请输入1"
+    end
