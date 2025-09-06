@@ -1,4 +1,4 @@
--- Roblox：登录输入“1”进入。主界面可上下滑动，滑动长度更大，外部有“隐藏界面/显示界面”，含速度/踏空/穿墙/无限跳/上帝模式/召唤秒杀刀/人物自定义旋转（无科目三）
+-- Roblox：登录输入“1”进入。主界面可上下滑动（滑动区域更大，UI优化），外部有“隐藏界面/显示界面”，含速度/踏空/穿墙/无限跳/上帝模式/人物自定义旋转/玩家碰到别人直接秒杀（无刀）
 
 if game.CoreGui:FindFirstChild("MyCustomUI") then game.CoreGui.MyCustomUI:Destroy() end
 
@@ -88,76 +88,41 @@ loginTip.ZIndex = 11
 
 local mainFrame = nil
 
--- 召唤碰到玩家就秒杀的刀
-local function summonKnife()
-    local p = Players.LocalPlayer
-    local char = p.Character or p.CharacterAdded:Wait()
-    if not char then return end
-
-    -- 刀工具
-    local tool = Instance.new("Tool")
-    tool.Name = "Knife"
-    tool.RequiresHandle = true
-    tool.CanBeDropped = true
-
-    -- 刀柄
-    local handle = Instance.new("Part")
-    handle.Name = "Handle"
-    handle.Size = Vector3.new(1, 4, 0.4)
-    handle.BrickColor = BrickColor.new("Really black")
-    handle.Material = Enum.Material.Metal
-    handle.TopSurface = Enum.SurfaceType.Smooth
-    handle.BottomSurface = Enum.SurfaceType.Smooth
-    handle.CanCollide = false
-    handle.Massless = true
-    handle.Parent = tool
-
-    -- 刀刃
-    local blade = Instance.new("Part")
-    blade.Name = "Blade"
-    blade.Size = Vector3.new(0.3, 3, 0.05)
-    blade.Position = handle.Position + Vector3.new(0, 3.5, 0)
-    blade.BrickColor = BrickColor.new("Institutional white")
-    blade.Material = Enum.Material.Metal
-    blade.TopSurface = Enum.SurfaceType.Smooth
-    blade.BottomSurface = Enum.SurfaceType.Smooth
-    blade.CanCollide = false
-    blade.Massless = true
-    blade.Parent = tool
-
-    -- 焊接刀刃到刀柄
-    local weld = Instance.new("WeldConstraint")
-    weld.Part0 = handle
-    weld.Part1 = blade
-    weld.Parent = handle
-
-    -- 刀柄必须为Handle
-    tool.Grip = CFrame.new(0, -2, 0)
-    handle.Name = "Handle"
-    handle.Parent = tool
-
-    -- 秒杀刀逻辑
-    local debounce = false
-    tool.Activated:Connect(function()
-        local con
-        con = blade.Touched:Connect(function(hit)
-            if debounce then return end
-            debounce = true
-            local h = hit.Parent and hit.Parent:FindFirstChildOfClass("Humanoid")
-            local player = Players.LocalPlayer
-            -- 不能杀自己
-            if h and h ~= (player.Character and player.Character:FindFirstChildOfClass("Humanoid")) then
-                h.Health = 0 -- 直接秒杀
+-- 碰撞秒杀功能
+local killerTouchConn = nil
+local killerEnabled = false
+local function enableKillerTouch(enable)
+    killerEnabled = enable
+    if killerTouchConn then killerTouchConn:Disconnect() killerTouchConn = nil end
+    if enable then
+        local p = Players.LocalPlayer
+        killerTouchConn = RunService.Stepped:Connect(function()
+            local char = p.Character
+            if not char then return end
+            for _, part in ipairs(char:GetChildren()) do
+                if part:IsA("BasePart") then
+                    part.Touched:Connect(function(hit)
+                        local otherChar = hit.Parent
+                        if otherChar and otherChar ~= char and Players:GetPlayerFromCharacter(otherChar) then
+                            local humanoid = otherChar:FindFirstChildOfClass("Humanoid")
+                            if humanoid and humanoid.Health > 0 then
+                                humanoid.Health = 0
+                            end
+                        end
+                    end)
+                end
             end
-            wait(0.1)
-            debounce = false
-            if con then con:Disconnect() end
         end)
-    end)
-
-    -- 工具放入背包
-    tool.Parent = p.Backpack
+    end
 end
+
+Players.LocalPlayer.CharacterAdded:Connect(function()
+    if killerEnabled then
+        enableKillerTouch(false)
+        wait(1)
+        enableKillerTouch(true)
+    end
+end)
 
 -- 人物旋转功能
 local rotateConn = nil
@@ -229,6 +194,7 @@ local function showMainUI()
     cb.ZIndex = 13
     cb.MouseButton1Click:Connect(function() 
         if rotateConn then rotateConn:Disconnect() end
+        if killerTouchConn then killerTouchConn:Disconnect() end
         gui:Destroy()
     end)
 
@@ -510,18 +476,32 @@ local function showMainUI()
     godBtn.MouseButton1Click:Connect(function() enableGodMode(not godEnabled) end)
     p.CharacterAdded:Connect(function() wait(1) enableGodMode(false) end)
 
-    -- 召唤秒杀刀
-    local knifeBtn = Instance.new("TextButton", scroll)
-    knifeBtn.Size = UDim2.new(0, 300, 0, 40)
-    knifeBtn.Position = UDim2.new(0, 50, 0, 290)
-    knifeBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-    knifeBtn.Text = "召唤秒杀刀"
-    knifeBtn.Font = Enum.Font.GothamBold
-    knifeBtn.TextSize = 20
-    knifeBtn.TextColor3 = Color3.fromRGB(255,255,255)
-    knifeBtn.ZIndex = 11
-    Instance.new("UICorner", knifeBtn).CornerRadius = UDim.new(1,0)
-    knifeBtn.MouseButton1Click:Connect(summonKnife)
+    -- 玩家碰撞秒杀开关
+    local killerBtn = Instance.new("TextButton", scroll)
+    killerBtn.Size = UDim2.new(0, 300, 0, 40)
+    killerBtn.Position = UDim2.new(0, 50, 0, 290)
+    killerBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 160)
+    killerBtn.Text = "碰到玩家直接秒杀：关闭"
+    killerBtn.Font = Enum.Font.GothamBold
+    killerBtn.TextSize = 20
+    killerBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    killerBtn.ZIndex = 11
+    Instance.new("UICorner", killerBtn).CornerRadius = UDim.new(1,0)
+    local function updateKillerBtn()
+        if killerEnabled then
+            killerBtn.BackgroundColor3 = Color3.fromRGB(255, 120, 200)
+            killerBtn.Text = "碰到玩家直接秒杀：开启"
+        else
+            killerBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 160)
+            killerBtn.Text = "碰到玩家直接秒杀：关闭"
+        end
+    end
+    killerBtn.MouseButton1Click:Connect(function()
+        killerEnabled = not killerEnabled
+        enableKillerTouch(killerEnabled)
+        updateKillerBtn()
+    end)
+    updateKillerBtn()
 
     -- 人物旋转
     local rotateBtn = Instance.new("TextButton", scroll)
@@ -592,7 +572,7 @@ local function showMainUI()
     tip.Size = UDim2.new(1, -56, 0, 60)
     tip.Position = UDim2.new(0, 28, 0, 420)
     tip.BackgroundTransparency = 1
-    tip.Text = "说明：踏空=空气墙，穿墙=Noclip，无限跳=多段跳，上帝=无敌，秒杀刀=碰到玩家直接淘汰，人物旋转可自定义速度。滑动区域已加大。"
+    tip.Text = "说明：踏空=空气墙，穿墙=Noclip，无限跳=多段跳，上帝=无敌，碰到玩家直接秒杀，人物旋转可自定义速度。滑动区域已加大。"
     tip.Font = Enum.Font.Gotham
     tip.TextSize = 16
     tip.TextColor3 = Color3.fromRGB(190,215,255)
