@@ -1,4 +1,4 @@
--- Roblox：登录输入“1”进入。主界面可上下滑动（滑动区域更大，UI优化），外部有“隐藏界面/显示界面”，含速度/踏空/穿墙/无限跳/上帝模式/人物自定义旋转/玩家碰到别人直接秒杀（无刀）
+-- Roblox：登录输入“1”进入。主界面可上下滑动（滑动区域更大，UI优化），外部有“隐藏界面/显示界面”，含速度/踏空/穿墙/无限跳/上帝模式/锁血（无敌）/人物自定义旋转/玩家碰到别人直接秒杀（无刀）
 
 if game.CoreGui:FindFirstChild("MyCustomUI") then game.CoreGui.MyCustomUI:Destroy() end
 
@@ -146,6 +146,27 @@ local function enableRotate(enable, speed)
 end
 Players.LocalPlayer.CharacterAdded:Connect(function() if rotateEnabled then enableRotate(true, rotateSpeed) end end)
 
+-- 锁血无敌功能
+local lockHealthConn = nil
+local lockHealthEnabled = false
+local function enableLockHealth(enable)
+    local p = Players.LocalPlayer
+    lockHealthEnabled = enable
+    if lockHealthConn then lockHealthConn:Disconnect() lockHealthConn = nil end
+    if enable then
+        lockHealthConn = RunService.RenderStepped:Connect(function()
+            local char = p.Character
+            if char then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum and hum.Health < (hum.MaxHealth or 100) then
+                    hum.Health = hum.MaxHealth or 100
+                end
+            end
+        end)
+    end
+end
+Players.LocalPlayer.CharacterAdded:Connect(function() if lockHealthEnabled then enableLockHealth(true) end end)
+
 -- 主界面函数
 local function showMainUI()
     loginFrame.Visible = false
@@ -195,6 +216,7 @@ local function showMainUI()
     cb.MouseButton1Click:Connect(function() 
         if rotateConn then rotateConn:Disconnect() end
         if killerTouchConn then killerTouchConn:Disconnect() end
+        if lockHealthConn then lockHealthConn:Disconnect() end
         gui:Destroy()
     end)
 
@@ -435,7 +457,7 @@ local function showMainUI()
     -- 上帝模式
     local godEnabled = false
     local godBtn = Instance.new("TextButton", scroll)
-    godBtn.Size = UDim2.new(0, 300, 0, 40)
+    godBtn.Size = UDim2.new(0, 140, 0, 40)
     godBtn.Position = UDim2.new(0, 50, 0, 230)
     godBtn.BackgroundColor3 = Color3.fromRGB(255, 225, 70)
     godBtn.Text = "上帝模式：关闭"
@@ -475,6 +497,33 @@ local function showMainUI()
     end
     godBtn.MouseButton1Click:Connect(function() enableGodMode(not godEnabled) end)
     p.CharacterAdded:Connect(function() wait(1) enableGodMode(false) end)
+
+    -- 锁血无敌
+    local lockHealthBtn = Instance.new("TextButton", scroll)
+    lockHealthBtn.Size = UDim2.new(0, 140, 0, 40)
+    lockHealthBtn.Position = UDim2.new(0, 210, 0, 230)
+    lockHealthBtn.BackgroundColor3 = Color3.fromRGB(60, 220, 90)
+    lockHealthBtn.Text = "锁血无敌：关闭"
+    lockHealthBtn.Font = Enum.Font.GothamBold
+    lockHealthBtn.TextSize = 20
+    lockHealthBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    lockHealthBtn.ZIndex = 11
+    Instance.new("UICorner", lockHealthBtn).CornerRadius = UDim.new(1,0)
+    local function updateLockHealthBtn()
+        if lockHealthEnabled then
+            lockHealthBtn.BackgroundColor3 = Color3.fromRGB(120, 255, 110)
+            lockHealthBtn.Text = "锁血无敌：开启"
+        else
+            lockHealthBtn.BackgroundColor3 = Color3.fromRGB(60,220,90)
+            lockHealthBtn.Text = "锁血无敌：关闭"
+        end
+    end
+    lockHealthBtn.MouseButton1Click:Connect(function()
+        lockHealthEnabled = not lockHealthEnabled
+        enableLockHealth(lockHealthEnabled)
+        updateLockHealthBtn()
+    end)
+    updateLockHealthBtn()
 
     -- 玩家碰撞秒杀开关
     local killerBtn = Instance.new("TextButton", scroll)
@@ -572,7 +621,7 @@ local function showMainUI()
     tip.Size = UDim2.new(1, -56, 0, 60)
     tip.Position = UDim2.new(0, 28, 0, 420)
     tip.BackgroundTransparency = 1
-    tip.Text = "说明：踏空=空气墙，穿墙=Noclip，无限跳=多段跳，上帝=无敌，碰到玩家直接秒杀，人物旋转可自定义速度。滑动区域已加大。"
+    tip.Text = "说明：踏空=空气墙，穿墙=Noclip，无限跳=多段跳，上帝=无敌，锁血=持续满血，碰到玩家直接秒杀，人物旋转可自定义速度。滑动区域已加大。"
     tip.Font = Enum.Font.Gotham
     tip.TextSize = 16
     tip.TextColor3 = Color3.fromRGB(190,215,255)
