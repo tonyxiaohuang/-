@@ -1,4 +1,4 @@
--- Roblox：登录输入“1”进入。主界面可上下滑动（滑动长度更大，优化UI），外部有“隐藏界面/显示界面”，含速度/踏空/穿墙/无限跳/上帝模式/召唤伤害刀/人物自定义旋转（无科目三）
+-- Roblox：登录输入“1”进入。主界面可上下滑动，滑动长度更大，外部有“隐藏界面/显示界面”，含速度/踏空/穿墙/无限跳/上帝模式/召唤秒杀刀/人物自定义旋转（无科目三）
 
 if game.CoreGui:FindFirstChild("MyCustomUI") then game.CoreGui.MyCustomUI:Destroy() end
 
@@ -88,7 +88,7 @@ loginTip.ZIndex = 11
 
 local mainFrame = nil
 
--- 召唤造成伤害的刀
+-- 召唤碰到玩家就秒杀的刀
 local function summonKnife()
     local p = Players.LocalPlayer
     local char = p.Character or p.CharacterAdded:Wait()
@@ -136,7 +136,7 @@ local function summonKnife()
     handle.Name = "Handle"
     handle.Parent = tool
 
-    -- 刀伤害逻辑
+    -- 秒杀刀逻辑
     local debounce = false
     tool.Activated:Connect(function()
         local con
@@ -144,8 +144,10 @@ local function summonKnife()
             if debounce then return end
             debounce = true
             local h = hit.Parent and hit.Parent:FindFirstChildOfClass("Humanoid")
-            if h and h ~= (Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")) then
-                h:TakeDamage(60)
+            local player = Players.LocalPlayer
+            -- 不能杀自己
+            if h and h ~= (player.Character and player.Character:FindFirstChildOfClass("Humanoid")) then
+                h.Health = 0 -- 直接秒杀
             end
             wait(0.1)
             debounce = false
@@ -508,12 +510,12 @@ local function showMainUI()
     godBtn.MouseButton1Click:Connect(function() enableGodMode(not godEnabled) end)
     p.CharacterAdded:Connect(function() wait(1) enableGodMode(false) end)
 
-    -- 召唤造成伤害的刀
+    -- 召唤秒杀刀
     local knifeBtn = Instance.new("TextButton", scroll)
     knifeBtn.Size = UDim2.new(0, 300, 0, 40)
     knifeBtn.Position = UDim2.new(0, 50, 0, 290)
     knifeBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-    knifeBtn.Text = "召唤伤害刀"
+    knifeBtn.Text = "召唤秒杀刀"
     knifeBtn.Font = Enum.Font.GothamBold
     knifeBtn.TextSize = 20
     knifeBtn.TextColor3 = Color3.fromRGB(255,255,255)
@@ -590,7 +592,7 @@ local function showMainUI()
     tip.Size = UDim2.new(1, -56, 0, 60)
     tip.Position = UDim2.new(0, 28, 0, 420)
     tip.BackgroundTransparency = 1
-    tip.Text = "说明：踏空=空气墙，穿墙=Noclip，无限跳=多段跳，上帝=无敌，刀=攻击，人物旋转可自定义速度。滑动区域已加大。"
+    tip.Text = "说明：踏空=空气墙，穿墙=Noclip，无限跳=多段跳，上帝=无敌，秒杀刀=碰到玩家直接淘汰，人物旋转可自定义速度。滑动区域已加大。"
     tip.Font = Enum.Font.Gotham
     tip.TextSize = 16
     tip.TextColor3 = Color3.fromRGB(190,215,255)
