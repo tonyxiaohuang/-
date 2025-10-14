@@ -727,46 +727,6 @@ local function showMainUI()
     end)
     updateRotateState()
 
-    -- 分割线
-    local sep = Instance.new("Frame", scroll)
-    sep.Size = UDim2.new(1, -18, 0, 1)
-    sep.Position = UDim2.new(0, 9, 0, 305)
-    sep.BackgroundColor3 = Color3.fromRGB(38,150,255)
-    sep.BorderSizePixel = 0
-    sep.ZIndex = 11
-
-    -- 提示文本
-    local tip = Instance.new("TextLabel", scroll)
-    tip.Size = UDim2.new(1, -18, 0, 40)
-    tip.Position = UDim2.new(0, 9, 0, 312)
-    tip.BackgroundTransparency = 1
-    tip.Text = "说明：踏空=空气墙，穿墙=Noclip，无限跳=多段跳，上帝/锁血=无敌，碰到玩家=秒杀，选择玩家可传送/杀死，旋转可自定义速度。窗口更小，滑动更长。"
-    tip.Font = Enum.Font.Gotham
-    tip.TextSize = 12
-    tip.TextColor3 = Color3.fromRGB(190,215,255)
-    tip.TextXAlignment = Enum.TextXAlignment.Left
-    tip.ZIndex = 11
-
-    scroll.CanvasSize = UDim2.new(0,0,0,1200)
-end
-
-loginBtn.MouseButton1Click:Connect(function()
-    if loginBox.Text == "1" then
-        showMainUI()
-    else
-        loginTip.Text = "输入错误，请输入1"
-    end
-end)
-
-toggleBtn.MouseButton1Click:Connect(function()
-    if mainFrame and mainFrame.Visible then
-        mainFrame.Visible = false
-        toggleBtn.Text = "显示界面"
-    elseif mainFrame then
-        mainFrame.Visible = true
-        toggleBtn.Text = "隐藏界面"
-    end
-end)
 -- 全图高亮功能
 local highlightEnabled = false
 local highlightBtn = Instance.new("TextButton", scroll)
@@ -814,4 +774,45 @@ end)
 -- 玩家重生时自动关闭高亮
 Players.LocalPlayer.CharacterAdded:Connect(function()
     setHighlightAll(false)
+end)
+
+    -- 分割线
+    local sep = Instance.new("Frame", scroll)
+    sep.Size = UDim2.new(1, -18, 0, 1)
+    sep.Position = UDim2.new(0, 9, 0, 305)
+    sep.BackgroundColor3 = Color3.fromRGB(38,150,255)
+    sep.BorderSizePixel = 0
+    sep.ZIndex = 11
+
+    -- 提示文本
+    local tip = Instance.new("TextLabel", scroll)
+    tip.Size = UDim2.new(1, -18, 0, 40)
+    tip.Position = UDim2.new(0, 9, 0, 312)
+    tip.BackgroundTransparency = 1
+    tip.Text = "说明：踏空=空气墙，穿墙=Noclip，无限跳=多段跳，上帝/锁血=无敌，碰到玩家=秒杀，选择玩家可传送/杀死，旋转可自定义速度。窗口更小，滑动更长。"
+    tip.Font = Enum.Font.Gotham
+    tip.TextSize = 12
+    tip.TextColor3 = Color3.fromRGB(190,215,255)
+    tip.TextXAlignment = Enum.TextXAlignment.Left
+    tip.ZIndex = 11
+
+    scroll.CanvasSize = UDim2.new(0,0,0,1200)
+end
+
+loginBtn.MouseButton1Click:Connect(function()
+    if loginBox.Text == "1" then
+        showMainUI()
+    else
+        loginTip.Text = "输入错误，请输入1"
+    end
+end)
+
+toggleBtn.MouseButton1Click:Connect(function()
+    if mainFrame and mainFrame.Visible then
+        mainFrame.Visible = false
+        toggleBtn.Text = "显示界面"
+    elseif mainFrame then
+        mainFrame.Visible = true
+        toggleBtn.Text = "隐藏界面"
+    end
 end)
