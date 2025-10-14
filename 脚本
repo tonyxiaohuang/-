@@ -727,74 +727,8 @@ local function showMainUI()
     end)
     updateRotateState()
 
--- 全图高亮功能
-local highlightEnabled = false
-local highlightBtn = Instance.new("TextButton", scroll)
-highlightBtn.Size = UDim2.new(0, 205, 0, 22)
-highlightBtn.Position = UDim2.new(0, 12, 0, 300)
-highlightBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 40)
-highlightBtn.Text = "全图高亮：关"
-highlightBtn.Font = Enum.Font.GothamBold
-highlightBtn.TextSize = 13
-highlightBtn.TextColor3 = Color3.fromRGB(80, 80, 40)
-highlightBtn.ZIndex = 11
-Instance.new("UICorner", highlightBtn).CornerRadius = UDim.new(1, 0)
-local highlights = {}
-
-local function setHighlightAll(enable)
-    highlightEnabled = enable
-    if enable then
-        highlightBtn.BackgroundColor3 = Color3.fromRGB(255, 230, 110)
-        highlightBtn.Text = "全图高亮：开"
-        -- 高亮所有BasePart
-        for _, v in ipairs(workspace:GetDescendants()) do
-            if v:IsA("BasePart") and not highlights[v] then
-                local hl = Instance.new("Highlight")
-                hl.FillColor = Color3.fromRGB(255, 220, 80)
-                hl.OutlineColor = Color3.fromRGB(255, 255, 120)
-                hl.Adornee = v
-                hl.Parent = v
-                highlights[v] = hl
-            end
-        end
-    else
-        highlightBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 40)
-        highlightBtn.Text = "全图高亮：关"
-        -- 移除所有高亮
-        for v, hl in pairs(highlights) do
-            if hl and hl.Parent then hl:Destroy() end
-        end
-        highlights = {}
-    end
-end
-
-highlightBtn.MouseButton1Click:Connect(function()
-    setHighlightAll(not highlightEnabled)
-end)
--- 玩家重生时自动关闭高亮
-Players.LocalPlayer.CharacterAdded:Connect(function()
-    setHighlightAll(false)
-end)
-
-    -- 分割线
-    local sep = Instance.new("Frame", scroll)
-    sep.Size = UDim2.new(1, -18, 0, 1)
-    sep.Position = UDim2.new(0, 9, 0, 305)
-    sep.BackgroundColor3 = Color3.fromRGB(38,150,255)
-    sep.BorderSizePixel = 0
-    sep.ZIndex = 11
 
     -- 提示文本
-    local tip = Instance.new("TextLabel", scroll)
-    tip.Size = UDim2.new(1, -18, 0, 40)
-    tip.Position = UDim2.new(0, 9, 0, 312)
-    tip.BackgroundTransparency = 1
-    tip.Text = "说明：踏空=空气墙，穿墙=Noclip，无限跳=多段跳，上帝/锁血=无敌，碰到玩家=秒杀，选择玩家可传送/杀死，旋转可自定义速度。窗口更小，滑动更长。"
-    tip.Font = Enum.Font.Gotham
-    tip.TextSize = 12
-    tip.TextColor3 = Color3.fromRGB(190,215,255)
-    tip.TextXAlignment = Enum.TextXAlignment.Left
-    tip.ZIndex = 11
 
     scroll.CanvasSize = UDim2.new(0,0,0,1200)
 end
