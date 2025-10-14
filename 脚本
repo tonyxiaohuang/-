@@ -767,3 +767,51 @@ toggleBtn.MouseButton1Click:Connect(function()
         toggleBtn.Text = "隐藏界面"
     end
 end)
+-- 全图高亮功能
+local highlightEnabled = false
+local highlightBtn = Instance.new("TextButton", scroll)
+highlightBtn.Size = UDim2.new(0, 205, 0, 22)
+highlightBtn.Position = UDim2.new(0, 12, 0, 300)
+highlightBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 40)
+highlightBtn.Text = "全图高亮：关"
+highlightBtn.Font = Enum.Font.GothamBold
+highlightBtn.TextSize = 13
+highlightBtn.TextColor3 = Color3.fromRGB(80, 80, 40)
+highlightBtn.ZIndex = 11
+Instance.new("UICorner", highlightBtn).CornerRadius = UDim.new(1, 0)
+local highlights = {}
+
+local function setHighlightAll(enable)
+    highlightEnabled = enable
+    if enable then
+        highlightBtn.BackgroundColor3 = Color3.fromRGB(255, 230, 110)
+        highlightBtn.Text = "全图高亮：开"
+        -- 高亮所有BasePart
+        for _, v in ipairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") and not highlights[v] then
+                local hl = Instance.new("Highlight")
+                hl.FillColor = Color3.fromRGB(255, 220, 80)
+                hl.OutlineColor = Color3.fromRGB(255, 255, 120)
+                hl.Adornee = v
+                hl.Parent = v
+                highlights[v] = hl
+            end
+        end
+    else
+        highlightBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 40)
+        highlightBtn.Text = "全图高亮：关"
+        -- 移除所有高亮
+        for v, hl in pairs(highlights) do
+            if hl and hl.Parent then hl:Destroy() end
+        end
+        highlights = {}
+    end
+end
+
+highlightBtn.MouseButton1Click:Connect(function()
+    setHighlightAll(not highlightEnabled)
+end)
+-- 玩家重生时自动关闭高亮
+Players.LocalPlayer.CharacterAdded:Connect(function()
+    setHighlightAll(false)
+end)
