@@ -769,7 +769,6 @@ Players.LocalPlayer.CharacterAdded:Connect(function()
 end)
  
    -- 提示文本
-
     scroll.CanvasSize = UDim2.new(0,0,0,1200)
 end
 
