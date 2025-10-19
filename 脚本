@@ -1,6 +1,3 @@
--- Roblox：登录输入“1”进入。主界面可上下滑动（滑动区域更大），外部有“隐藏界面/显示界面”，含速度/踏空/穿墙/无限跳/上帝模式/锁血/人物自定义旋转/碰到玩家秒杀/选择玩家传送和杀死
--- 优化：窗口更小，滑动距离更长，界面更紧凑
-
 if game.CoreGui:FindFirstChild("MyCustomUI") then game.CoreGui.MyCustomUI:Destroy() end
 
 local UIS = game:GetService("UserInputService")
@@ -726,7 +723,50 @@ local function showMainUI()
         end
     end)
     updateRotateState()
+ 
+  -- 夜视功能
+   local nightVisionEnabled = false
+   local nightVisionBtn = Instance.new("TextButton", scroll)
+   nightVisionBtn.Size = UDim2.new(0, 90, 0, 22)
+   nightVisionBtn.Position = UDim2.new(0, 120, 0, 300)
+   nightVisionBtn.BackgroundColor3 = Color3.fromRGB(90, 255, 120)
+   nightVisionBtn.Text = "夜视：关"
+   nightVisionBtn.Font = Enum.Font.GothamBold
+   nightVisionBtn.TextSize = 13
+   nightVisionBtn.TextColor3 = Color3.fromRGB(30, 80, 30)
+   nightVisionBtn.ZIndex = 11
+   Instance.new("UICorner", nightVisionBtn).CornerRadius = UDim.new(1, 0)
 
+   -- 保存原Lighting参数
+   local Lighting = game:GetService("Lighting")
+   local originalAmbient = Lighting.Ambient
+   local originalOutdoorAmbient = Lighting.OutdoorAmbient
+   local originalBrightness = Lighting.Brightness
+
+   local function setNightVision(enable)
+       nightVisionEnabled = enable
+enable then
+           Lighting.Ambient = Color3.new(1, 1, 1)
+           Lighting.OutdoorAmbient = Color3.new(1, 1, 1)
+           Lighting.Brightness = 6
+           nightVisionBtn.BackgroundColor3 = Color3.fromRGB(180, 255, 180)
+           nightVisionBtn.Text = "夜视：开"
+       else
+           Lighting.Ambient = originalAmbient
+           Lighting.OutdoorAmbient = originalOutdoorAmbient
+           Lighting.Brightness = originalBrightness
+           nightVisionBtn.BackgroundColor3 = Color3.fromRGB(90, 255, 120)
+           nightVisionBtn.Text = "夜视：关"
+       end
+   end
+
+   nightVisionBtn.MouseButton1Click:Connect(function()
+       setNightVision(not nightVisionEnabled)
+   end)
+   -- 玩家重生时自动关闭夜视
+   Players.LocalPlayer.CharacterAdded:Connect(function()
+       setNightVision(false)
+   end)
 
     -- 提示文本
 
