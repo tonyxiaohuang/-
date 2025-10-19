@@ -724,8 +724,51 @@ local function showMainUI()
     end)
     updateRotateState()
 
+-- 夜视功能
+local nightVisionEnabled = false
+local nightVisionBtn = Instance.new("TextButton", scroll)
+nightVisionBtn.Size = UDim2.new(0, 90, 0, 22)
+nightVisionBtn.Position = UDim2.new(0, 120, 0, 300)
+nightVisionBtn.BackgroundColor3 = Color3.fromRGB(90, 255, 120)
+nightVisionBtn.Text = "夜视：关"
+nightVisionBtn.Font = Enum.Font.GothamBold
+nightVisionBtn.TextSize = 13
+nightVisionBtn.TextColor3 = Color3.fromRGB(30, 80, 30)
+nightVisionBtn.ZIndex = 11
+Instance.new("UICorner", nightVisionBtn).CornerRadius = UDim.new(1, 0)
 
-    -- 提示文本
+-- 保存原Lighting参数
+local Lighting = game:GetService("Lighting")
+local originalAmbient = Lighting.Ambient
+local originalOutdoorAmbient = Lighting.OutdoorAmbient
+local originalBrightness = Lighting.Brightness
+
+local function setNightVision(enable)
+    nightVisionEnabled = enable
+    if enable then
+        Lighting.Ambient = Color3.new(1, 1, 1)
+        Lighting.OutdoorAmbient = Color3.new(1, 1, 1)
+        Lighting.Brightness = 6
+        nightVisionBtn.BackgroundColor3 = Color3.fromRGB(180, 255, 180)
+        nightVisionBtn.Text = "夜视：开"
+    else
+        Lighting.Ambient = originalAmbient
+        Lighting.OutdoorAmbient = originalOutdoorAmbient
+        Lighting.Brightness = originalBrightness
+        nightVisionBtn.BackgroundColor3 = Color3.fromRGB(90, 255, 120)
+        nightVisionBtn.Text = "夜视：关"
+    end
+end
+
+nightVisionBtn.MouseButton1Click:Connect(function()
+    setNightVision(not nightVisionEnabled)
+end)
+-- 玩家重生时自动关闭夜视
+Players.LocalPlayer.CharacterAdded:Connect(function()
+    setNightVision(false)
+end)
+ 
+   -- 提示文本
 
     scroll.CanvasSize = UDim2.new(0,0,0,1200)
 end
