@@ -1,3 +1,4 @@
+-
 if game.CoreGui:FindFirstChild("MyCustomUI") then game.CoreGui.MyCustomUI:Destroy() end
 
 local UIS = game:GetService("UserInputService")
